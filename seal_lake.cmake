@@ -1,12 +1,12 @@
 set(SEAL_LAKE_LIB "")
-set(SEAL_LAKE_BUILD_INCLUDE_SCOPE "")
+set(SEAL_LAKE_DEFAULT_SCOPE "")
 include(FetchContent)
 
 function(SealLake_HeaderOnlyLibrary NAME)
     set(SEAL_LAKE_LIB ${NAME} PARENT_SCOPE)
-    set(SEAL_LAKE_BUILD_INCLUDE_SCOPE INTERFACE PARENT_SCOPE)
-    set(SEAL_LAKE_BUILD_INCLUDE_SCOPE PUBLIC PARENT_SCOPE)
-    set(SEAL_LAKE_BUILD_INCLUDE_SCOPE PUBLIC)
+    set(SEAL_LAKE_LIB ${NAME})
+    set(SEAL_LAKE_DEFAULT_SCOPE INTERFACE PARENT_SCOPE)
+    set(SEAL_LAKE_DEFAULT_SCOPE INTERFACE)
 
     cmake_parse_arguments(
         ARG
@@ -25,7 +25,9 @@ function(SealLake_HeaderOnlyLibrary NAME)
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
     SealLake_Properties(${ARG_PROPERTIES})
-    set_target_properties(${NAME} PROPERTIES PUBLIC_HEADERS ${ARG_PUBLIC_HEADERS})
+    if (ARG_PROPERTIES)
+        set_target_properties(${NAME} PROPERTIES PUBLIC_HEADERS ${ARG_PUBLIC_HEADERS})
+    endif()
     SealLake_CompileFeatures(${ARG_COMPILE_FEATURES})
 
     SealLake_CheckStandalone(IS_STANDALONE)
@@ -40,8 +42,8 @@ endfunction()
 function(SealLake_StaticLibrary NAME)
     set(SEAL_LAKE_LIB ${NAME} PARENT_SCOPE)
     set(SEAL_LAKE_LIB ${NAME})
-    set(SEAL_LAKE_BUILD_INCLUDE_SCOPE PUBLIC PARENT_SCOPE)
-    set(SEAL_LAKE_BUILD_INCLUDE_SCOPE PUBLIC)
+    set(SEAL_LAKE_DEFAULT_SCOPE PUBLIC PARENT_SCOPE)
+    set(SEAL_LAKE_DEFAULT_SCOPE PUBLIC)
 
     cmake_parse_arguments(
         ARG
@@ -60,8 +62,9 @@ function(SealLake_StaticLibrary NAME)
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
     SealLake_Properties(${ARG_PROPERTIES})
-    set_target_properties(${NAME} PROPERTIES PUBLIC_HEADERS ${ARG_PUBLIC_HEADERS})
-
+    if (ARG_PROPERTIES)
+        set_target_properties(${NAME} PROPERTIES PUBLIC_HEADERS ${ARG_PUBLIC_HEADERS})
+    endif()
     SealLake_CompileFeatures(${ARG_COMPILE_FEATURES})
 
     SealLake_CheckStandalone(IS_STANDALONE)
@@ -82,8 +85,8 @@ endfunction()
 function(SealLake_ObjectLibrary NAME)
     set(SEAL_LAKE_LIB ${NAME} PARENT_SCOPE)
     set(SEAL_LAKE_LIB ${NAME})
-    set(SEAL_LAKE_BUILD_INCLUDE_SCOPE PUBLIC PARENT_SCOPE)
-    set(SEAL_LAKE_BUILD_INCLUDE_SCOPE PUBLIC)
+    set(SEAL_LAKE_DEFAULT_SCOPE PUBLIC PARENT_SCOPE)
+    set(SEAL_LAKE_DEFAULT_SCOPE PUBLIC)
 
     cmake_parse_arguments(
         ARG
@@ -103,8 +106,9 @@ function(SealLake_ObjectLibrary NAME)
     )
 
     SealLake_Properties(${ARG_PROPERTIES})
-    set_target_properties(${NAME} PROPERTIES PUBLIC_HEADERS ${ARG_PUBLIC_HEADERS})
-
+    if (ARG_PROPERTIES)
+        set_target_properties(${NAME} PROPERTIES PUBLIC_HEADERS ${ARG_PUBLIC_HEADERS})
+    endif()
     SealLake_CompileFeatures(${ARG_COMPILE_FEATURES})
 
     SealLake_CheckStandalone(IS_STANDALONE)
@@ -126,8 +130,8 @@ endfunction()
 function(SealLake_SharedLibrary NAME)
     set(SEAL_LAKE_LIB ${NAME} PARENT_SCOPE)
     set(SEAL_LAKE_LIB ${NAME})
-    set(SEAL_LAKE_BUILD_INCLUDE_SCOPE PUBLIC PARENT_SCOPE)
-    set(SEAL_LAKE_BUILD_INCLUDE_SCOPE PUBLIC)
+    set(SEAL_LAKE_DEFAULT_SCOPE PUBLIC PARENT_SCOPE)
+    set(SEAL_LAKE_DEFAULT_SCOPE PUBLIC)
 
     cmake_parse_arguments(
         ARG
@@ -203,7 +207,7 @@ endfunction()
 
 function (SealLake_CompileFeatures)
      foreach(FEATURE IN ITEMS ${ARGN})
-        target_compile_features(${SEAL_LAKE_LIB} PUBLIC ${FEATURE})
+        target_compile_features(${SEAL_LAKE_LIB} ${SEAL_LAKE_DEFAULT_SCOPE} ${FEATURE})
      endforeach()
 endfunction()
 
@@ -218,7 +222,7 @@ endfunction()
 function (SealLake_IncludeDirectoryBuild PATH)
     target_include_directories(
             ${SEAL_LAKE_LIB}
-            ${SEAL_LAKE_BUILD_INCLUDE_SCOPE}
+            ${SEAL_LAKE_DEFAULT_SCOPE}
             $<BUILD_INTERFACE:"${CMAKE_INSTALL_INCLUDEDIR}/${PATH}">
     )
 endfunction()
@@ -234,12 +238,12 @@ endfunction()
 function (SealLake_IncludePathBuild PATH)
     target_include_directories(
             ${SEAL_LAKE_LIB}
-            ${SEAL_LAKE_BUILD_INCLUDE_SCOPE}
+            ${SEAL_LAKE_DEFAULT_SCOPE}
             $<BUILD_INTERFACE:"${CMAKE_INSTALL_INCLUDEDIR}/${PATH}">
     )
 endfunction()
 
-function (SealLake_AdditionalBuildSteps)
+function (SealLake_OptionalBuildSteps)
     list(LENGTH ARGN PROPERTIES_LENGTH)
     MATH(EXPR PROPERTY_LAST_INDEX "${PROPERTIES_LENGTH} - 2")
     if (PROPERTIES_LENGTH GREATER 1)
