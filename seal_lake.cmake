@@ -174,18 +174,26 @@ endfunction()
 function (SealLake_GoogleTest NAME)
     cmake_parse_arguments(
         ARG
-        ""
+        "SKIP_FETCHING"
         ""
         "SOURCES;LIBRARIES"
         ${ARGN}
     )
+    if (NOT ARG_SKIP_FETCHING)
+        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+        set(INSTALL_GTEST OFF)
+        SealLake_FindOrDownload(googletest 1.12.1
+          GIT_REPOSITORY https://github.com/google/googletest.git
+          GIT_TAG release-1.12.1
+        )
+    endif()
     enable_testing()
     find_package(Threads REQUIRED)
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     include(GoogleTest)
     add_executable(${NAME} ${ARG_SOURCES})
     add_test(NAME ${NAME} COMMAND ${NAME})
-    target_link_libraries(${NAME} PRIVATE ${ARG_LIBRARIES} Threads::Threads GTest::gtest_main)
+    target_link_libraries(${NAME} PRIVATE ${ARG_LIBRARIES} Threads::Threads GTest::gtest_main GTest::gmock_main )
     gtest_discover_tests(${NAME})
 endfunction()
 
@@ -341,10 +349,6 @@ function (SealLake_FindOrDownload NAME VERSION)
         ""
         ${ARGN}
     )
-    if (ARG_GIT_REPOSITORY STREQUAL "https://github.com/google/googletest.git")
-        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    endif()
-
     find_package(${NAME} ${VERSION} QUIET)
     if (NOT ${${NAME}_FOUND})
         message("Configuration info: ${NAME} wasn't found on your system, proceeding to downloading it.")
