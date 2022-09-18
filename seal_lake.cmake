@@ -45,6 +45,8 @@ function(SealLake_StaticLibrary NAME)
     set(SEAL_LAKE_DEFAULT_SCOPE PUBLIC PARENT_SCOPE)
     set(SEAL_LAKE_DEFAULT_SCOPE PUBLIC)
 
+    string(TOUPPER ${NAME} VARNAME)
+    set(${VARNAME}_OBJECT_LIB "Build ${NAME} as object library" OFF PARENT_SCOPE)
     cmake_parse_arguments(
         ARG
         ""
@@ -53,7 +55,11 @@ function(SealLake_StaticLibrary NAME)
         ${ARGN}
     )
 
-    add_library(${NAME} STATIC ${ARG_SOURCES})
+    if (${VARNAME}_OBJECT_LIB)
+        add_library(${NAME} OBJECT ${ARG_SOURCES})
+    else()
+        add_library(${NAME} STATIC ${ARG_SOURCES})
+    endif()
     add_library("${NAME}::${NAME}" ALIAS ${NAME})
     target_include_directories(
             ${NAME}
@@ -68,53 +74,7 @@ function(SealLake_StaticLibrary NAME)
     SealLake_CompileFeatures(${ARG_COMPILE_FEATURES})
 
     SealLake_CheckStandalone(IS_STANDALONE)
-    string(TOUPPER ${NAME} VARNAME)
     set(INSTALL_${VARNAME} "Install ${NAME}" OFF PARENT_SCOPE)
-    if (IS_STANDALONE OR INSTALL_${VARNAME})
-        install(TARGETS ${NAME}
-                ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-                PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${NAME}"
-        )
-        if (NOT ARG_PUBLIC_HEADERS)
-            install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${NAME} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-        endif()
-        SealLake_InstallPackage(COMPATIBILITY SameMajorVersion)
-    endif()
-endfunction()
-
-function(SealLake_ObjectLibrary NAME)
-    set(SEAL_LAKE_LIB ${NAME} PARENT_SCOPE)
-    set(SEAL_LAKE_LIB ${NAME})
-    set(SEAL_LAKE_DEFAULT_SCOPE PUBLIC PARENT_SCOPE)
-    set(SEAL_LAKE_DEFAULT_SCOPE PUBLIC)
-
-    cmake_parse_arguments(
-        ARG
-        ""
-        ""
-        "PROPERTIES;COMPILE_FEATURES;SOURCES;PUBLIC_HEADERS"
-        ${ARGN}
-    )
-
-    add_library(${NAME} OBJECT ${ARG_SOURCES})
-    add_library("${NAME}::${NAME}" ALIAS ${NAME})
-    target_include_directories(
-            ${NAME}
-            PUBLIC
-            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-    )
-
-    SealLake_Properties(${ARG_PROPERTIES})
-    if (ARG_PUBLIC_HEADERS)
-        set_target_properties(${NAME} PROPERTIES PUBLIC_HEADERS ${ARG_PUBLIC_HEADERS})
-    endif()
-    SealLake_CompileFeatures(${ARG_COMPILE_FEATURES})
-
-    SealLake_CheckStandalone(IS_STANDALONE)
-    string(TOUPPER ${NAME} VARNAME)
-    set(INSTALL_${VARNAME} "Install ${NAME} library unconditionally" OFF PARENT_SCOPE)
-    message("Install is set: ${INSTALL_${VARNAME}}")
     if (IS_STANDALONE OR INSTALL_${VARNAME})
         install(TARGETS ${NAME}
                 ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -140,7 +100,6 @@ function(SealLake_SharedLibrary NAME)
         "PROPERTIES;COMPILE_FEATURES;SOURCES;PUBLIC_HEADERS"
         ${ARGN}
     )
-
 
     add_library(${NAME} SHARED ${ARG_SOURCES})
     add_library("${NAME}::${NAME}" ALIAS ${NAME})
@@ -241,7 +200,7 @@ function (SealLake_IncludePathInstall PATH)
      target_include_directories(
             ${SEAL_LAKE_LIB}
             PUBLIC
-            $<INSTALL_INTERFACE:"${CMAKE_INSTALL_INCLUDEDIR}/${PATH}">
+            $<INSTALL_INTERFACE:"${PATH}">
     )
 endfunction()
 
@@ -249,7 +208,7 @@ function (SealLake_IncludePathBuild PATH)
     target_include_directories(
             ${SEAL_LAKE_LIB}
             ${SEAL_LAKE_DEFAULT_SCOPE}
-            $<BUILD_INTERFACE:"${CMAKE_INSTALL_INCLUDEDIR}/${PATH}">
+            $<BUILD_INTERFACE:"${PATH}">
     )
 endfunction()
 
