@@ -6,7 +6,7 @@
 
 Download and link the library from your project's CMakeLists.txt:
 ```
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.20)
 
 include(FetchContent)
 FetchContent_Declare(seal_lake
