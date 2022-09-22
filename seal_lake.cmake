@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.20)
 
-set(SEAL_LAKE_LIB "")
+set(SEAL_LAKE_TARGET "")
 set(SEAL_LAKE_LIB_TYPE "")
 set(SEAL_LAKE_DEFAULT_SCOPE "")
 include(FetchContent)
 
 macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
-    set(${SEAL_LAKE_LIB} ${NAME} PARENT_SCOPE)
-    set(SEAL_LAKE_LIB ${NAME})
+    set(${SEAL_LAKE_TARGET} ${NAME} PARENT_SCOPE)
+    set(SEAL_LAKE_TARGET ${NAME})
     set(${SEAL_LAKE_LIB_TYPE} ${LIBRARY_TYPE} PARENT_SCOPE)
     set(SEAL_LAKE_LIB_TYPE ${LIBRARY_TYPE})
     set(${SEAL_LAKE_DEFAULT_SCOPE} ${LIBRARY_SCOPE} PARENT_SCOPE)
@@ -95,9 +95,12 @@ function (SealLake_GoogleTest NAME)
         ARG
         "SKIP_FETCHING"
         ""
-        "SOURCES;LIBRARIES"
+        "SOURCES;INCLUDES;LIBRARIES"
         ${ARGN}
     )
+    set(${SEAL_LAKE_TARGET} ${NAME} PARENT_SCOPE)
+    set(SEAL_LAKE_TARGET ${NAME})
+
     if (NOT ARG_SKIP_FETCHING)
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
         set(INSTALL_GTEST OFF)
@@ -112,7 +115,11 @@ function (SealLake_GoogleTest NAME)
     include(GoogleTest)
     add_executable(${NAME} ${ARG_SOURCES})
     add_test(NAME ${NAME} COMMAND ${NAME})
-    target_link_libraries(${NAME} PRIVATE ${ARG_LIBRARIES} Threads::Threads GTest::gtest_main GTest::gmock_main )
+    target_include_directories(${NAME} PRIVATE ${ARG_INCLUDES})
+    SealLake_Libraries(
+            BUILD
+                ${ARG_LIBRARIES} Threads::Threads GTest::gtest_main GTest::gmock_main
+    )
     gtest_discover_tests(${NAME})
 endfunction()
 
@@ -126,7 +133,7 @@ function (SealLake_Properties)
             list(GET ARGN ${PROPERTY_INDEX} PROPERTY_VALUE)
             message("Set property ${PROPERTY_NAME} ${PROPERTY_VALUE}")
             if (PROPERTY_NAME AND PROPERTY_VALUE)
-                set_target_properties(${SEAL_LAKE_LIB} PROPERTIES ${PROPERTY_NAME} "${PROPERTY_VALUE}")
+                set_target_properties(${SEAL_LAKE_TARGET} PROPERTIES ${PROPERTY_NAME} "${PROPERTY_VALUE}")
             endif()
         endforeach()
     endif()
@@ -134,7 +141,7 @@ endfunction()
 
 function (SealLake_CompileFeatures)
     foreach(FEATURE IN ITEMS ${ARGN})
-    target_compile_features(${SEAL_LAKE_LIB} ${SEAL_LAKE_DEFAULT_SCOPE} ${FEATURE})
+    target_compile_features(${SEAL_LAKE_TARGET} ${SEAL_LAKE_DEFAULT_SCOPE} ${FEATURE})
     endforeach()
 endfunction()
 
@@ -155,7 +162,7 @@ function (SealLake_Includes)
                 set(RESULT_PATH ${PATH})
             endif()
             target_include_directories(
-                   ${SEAL_LAKE_LIB}
+                   ${SEAL_LAKE_TARGET}
                    PUBLIC
                    $<${INTERFACE_TYPE}_INTERFACE:${RESULT_PATH}>
             )
@@ -182,9 +189,9 @@ function (SealLake_Libraries)
         foreach (LIB IN ITEMS ${ARGN})
             message("Link ${LIB}")
             if (SEAL_LAKE_LIB_TYPE STREQUAL STATIC AND ${SCOPE} STREQUAL PRIVATE)
-                target_link_libraries(${SEAL_LAKE_LIB} ${SCOPE} "$<BUILD_INTERFACE:${LIB}>")
+                target_link_libraries(${SEAL_LAKE_TARGET} ${SCOPE} "$<BUILD_INTERFACE:${LIB}>")
             else()
-                target_link_libraries(${SEAL_LAKE_LIB} ${SCOPE} ${LIB})
+                target_link_libraries(${SEAL_LAKE_TARGET} ${SCOPE} ${LIB})
             endif()
         endforeach()
     endmacro()
@@ -250,10 +257,10 @@ function (SealLake_Install)
             ${ARGN}
     )
     if(ARG_FILES)
-        install(FILES ${ARG_FILES} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${SEAL_LAKE_LIB})
+        install(FILES ${ARG_FILES} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${SEAL_LAKE_TARGET})
     endif()
     if(ARG_DIRECTORIES)
-        install(DIRECTORY ${ARG_DIRECTORIES} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${SEAL_LAKE_LIB})
+        install(DIRECTORY ${ARG_DIRECTORIES} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${SEAL_LAKE_TARGET})
     endif()
 endfunction()
 
@@ -274,30 +281,30 @@ function(SealLake_InstallPackage)
         ""
         ${ARGN}
     )
-    set(PACK_PATH "${CMAKE_INSTALL_LIBDIR}/cmake/${SEAL_LAKE_LIB}")
+    set(PACK_PATH "${CMAKE_INSTALL_LIBDIR}/cmake/${SEAL_LAKE_TARGET}")
 
-    install(TARGETS "${SEAL_LAKE_LIB}"
-            EXPORT "${SEAL_LAKE_LIB}-targets"
+    install(TARGETS "${SEAL_LAKE_TARGET}"
+            EXPORT "${SEAL_LAKE_TARGET}-targets"
     )
-    install(EXPORT "${SEAL_LAKE_LIB}-targets"
-            FILE "${SEAL_LAKE_LIB}Targets.cmake"
-            NAMESPACE "${SEAL_LAKE_LIB}::"
+    install(EXPORT "${SEAL_LAKE_TARGET}-targets"
+            FILE "${SEAL_LAKE_TARGET}Targets.cmake"
+            NAMESPACE "${SEAL_LAKE_TARGET}::"
             DESTINATION "${PACK_PATH}"
     )
 
     include(CMakePackageConfigHelpers)
     write_basic_package_version_file(
-            "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_LIB}ConfigVersion.cmake"
+            "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}ConfigVersion.cmake"
             COMPATIBILITY "${ARG_COMPATIBILITY}"
             ARCH_INDEPENDENT
     )
-    configure_package_config_file("${CMAKE_CURRENT_LIST_DIR}/cmake/${SEAL_LAKE_LIB}Config.cmake.in"
-            "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_LIB}Config.cmake"
+    configure_package_config_file("${CMAKE_CURRENT_LIST_DIR}/cmake/${SEAL_LAKE_TARGET}Config.cmake.in"
+            "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}Config.cmake"
             INSTALL_DESTINATION "${PACK_PATH}"
     )
     install(FILES
-            "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_LIB}Config.cmake"
-            "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_LIB}ConfigVersion.cmake"
+            "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}Config.cmake"
+            "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}ConfigVersion.cmake"
             DESTINATION "${PACK_PATH}"
     )
 endfunction()
