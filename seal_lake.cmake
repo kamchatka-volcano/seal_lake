@@ -90,6 +90,36 @@ function(SealLake_SharedLibrary NAME)
     _SealLakeImpl_Library(SHARED PUBLIC LIBRARY)
 endfunction()
 
+function(SealLake_Executable NAME)
+    cmake_parse_arguments(
+        ARG
+        ""
+        ""
+        "PROPERTIES;COMPILE_FEATURES;SOURCES;INCLUDES;LIBRARIES"
+        ${ARGN}
+    )
+    set(${SEAL_LAKE_TARGET} ${NAME} PARENT_SCOPE)
+    set(SEAL_LAKE_TARGET ${NAME})
+    set(${SEAL_LAKE_DEFAULT_SCOPE} PRIVATE PARENT_SCOPE)
+    set(SEAL_LAKE_DEFAULT_SCOPE PRIVATE)
+
+    add_executable(${NAME} ${ARG_SOURCES})
+    target_include_directories(${NAME} PRIVATE ${ARG_INCLUDES})
+    SealLake_Properties(${ARG_PROPERTIES})
+    SealLake_CompileFeatures(${ARG_COMPILE_FEATURES})
+    SealLake_Libraries(BUILD ${ARG_LIBRARIES})
+    SealLake_CheckStandalone(IS_STANDALONE)
+    string(TOUPPER ${NAME} VARNAME)
+    set(${INSTALL_${VARNAME}} "Install ${NAME}" OFF PARENT_SCOPE)
+    if (IS_STANDALONE OR INSTALL_${VARNAME})
+        if(${INSTALL_BUILD_RESULT})
+            install(TARGETS ${NAME}
+                    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+            )
+        endif()
+    endif()
+endfunction()
+
 function (SealLake_GoogleTest NAME)
     cmake_parse_arguments(
         ARG
@@ -100,6 +130,8 @@ function (SealLake_GoogleTest NAME)
     )
     set(${SEAL_LAKE_TARGET} ${NAME} PARENT_SCOPE)
     set(SEAL_LAKE_TARGET ${NAME})
+    set(${SEAL_LAKE_DEFAULT_SCOPE} PRIVATE PARENT_SCOPE)
+    set(SEAL_LAKE_DEFAULT_SCOPE PRIVATE)
 
     if (NOT ARG_SKIP_FETCHING)
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
