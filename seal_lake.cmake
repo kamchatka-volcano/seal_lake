@@ -24,7 +24,7 @@ macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
 
     SealLake_Properties(${ARG_PROPERTIES})
     if (ARG_PUBLIC_HEADERS)
-        set_target_properties(${NAME} PROPERTIES PUBLIC_HEADERS ${ARG_PUBLIC_HEADERS})
+        set_target_properties(${NAME} PROPERTIES PUBLIC_HEADER "${ARG_PUBLIC_HEADERS}")
     endif()
     SealLake_CompileFeatures(${ARG_COMPILE_FEATURES})
     SealLake_Includes(
@@ -95,7 +95,7 @@ function (SealLake_GoogleTest NAME)
         ARG
         "SKIP_FETCHING"
         ""
-        "SOURCES;INCLUDES;LIBRARIES"
+        "PROPERTIES;COMPILE_FEATURES;SOURCES;INCLUDES;LIBRARIES"
         ${ARGN}
     )
     set(${SEAL_LAKE_TARGET} ${NAME} PARENT_SCOPE)
@@ -116,6 +116,8 @@ function (SealLake_GoogleTest NAME)
     add_executable(${NAME} ${ARG_SOURCES})
     add_test(NAME ${NAME} COMMAND ${NAME})
     target_include_directories(${NAME} PRIVATE ${ARG_INCLUDES})
+    SealLake_Properties(${ARG_PROPERTIES})
+    SealLake_CompileFeatures(${ARG_COMPILE_FEATURES})
     SealLake_Libraries(
             BUILD
                 ${ARG_LIBRARIES} Threads::Threads GTest::gtest_main GTest::gmock_main
