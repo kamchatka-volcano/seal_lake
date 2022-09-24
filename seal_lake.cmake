@@ -10,6 +10,11 @@ macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
     set(${SEAL_LAKE_DEFAULT_SCOPE} ${LIBRARY_SCOPE} PARENT_SCOPE)
     set(SEAL_LAKE_DEFAULT_SCOPE ${LIBRARY_SCOPE})
 
+    if ("Threads::Threads" IN_LIST ARG_LIBRARIES)
+        find_package(Threads REQUIRED)
+        set(THREADS_PREFER_PTHREAD_FLAG ON)
+    endif()
+
     add_library(${PROJECT_NAME} ${LIBRARY_TYPE} ${ARG_SOURCES})
     add_library("${PROJECT_NAME}::${PROJECT_NAME}" ALIAS ${PROJECT_NAME})
     target_include_directories(
@@ -97,6 +102,11 @@ function(SealLake_Executable)
     )
     set(${SEAL_LAKE_DEFAULT_SCOPE} PRIVATE PARENT_SCOPE)
     set(SEAL_LAKE_DEFAULT_SCOPE PRIVATE)
+
+    if ("Threads::Threads" IN_LIST ARG_LIBRARIES)
+        find_package(Threads REQUIRED)
+        set(THREADS_PREFER_PTHREAD_FLAG ON)
+    endif()
 
     add_executable(${PROJECT_NAME} ${ARG_SOURCES})
     target_include_directories(${PROJECT_NAME} PRIVATE ${ARG_INCLUDES})
