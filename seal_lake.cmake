@@ -5,10 +5,11 @@ set(SEAL_LAKE_DEFAULT_SCOPE "")
 include(FetchContent)
 
 macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
-    set(${SEAL_LAKE_LIB_TYPE} ${LIBRARY_TYPE} PARENT_SCOPE)
     set(SEAL_LAKE_LIB_TYPE ${LIBRARY_TYPE})
-    set(${SEAL_LAKE_DEFAULT_SCOPE} ${LIBRARY_SCOPE} PARENT_SCOPE)
     set(SEAL_LAKE_DEFAULT_SCOPE ${LIBRARY_SCOPE})
+    set(SEAL_LAKE_LIB_TYPE ${LIBRARY_TYPE} PARENT_SCOPE)
+    set(SEAL_LAKE_DEFAULT_SCOPE ${LIBRARY_SCOPE} PARENT_SCOPE)
+
 
     if ("Threads::Threads" IN_LIST ARG_LIBRARIES)
         find_package(Threads REQUIRED)
@@ -298,15 +299,20 @@ function (SealLake_Install)
     cmake_parse_arguments(
             ARG
             ""
-            ""
+            "PATH"
             "FILES;DIRECTORIES"
             ${ARGN}
     )
+    if(PATH)
+        set(DESTINATION_PATH ${CMAKE_INSTALL_INCLUDEDIR}/${PATH}/${PROJECT_NAME})
+    else()
+        set(DESTINATION_PATH ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+    endif()
     if(ARG_FILES)
-        install(FILES ${ARG_FILES} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+        install(FILES ${ARG_FILES} DESTINATION ${DESTINATION_PATH})
     endif()
     if(ARG_DIRECTORIES)
-        install(DIRECTORY ${ARG_DIRECTORIES} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+        install(DIRECTORY ${ARG_DIRECTORIES} DESTINATION ${DESTINATION_PATH})
     endif()
 endfunction()
 
