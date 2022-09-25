@@ -190,23 +190,32 @@ function (SealLake_Includes)
         "BUILD;INSTALL"
         ${ARGN}
     )
-    macro(_AddIncludes INTERFACE_TYPE)
-        foreach (PATH IN ITEMS ${ARGN})
-            cmake_path(IS_RELATIVE PATH IS_PATH_RELATIVE)
-            if (IS_PATH_RELATIVE)
-                set(RESULT_PATH ${CMAKE_INSTALL_INCLUDEDIR}/${PATH})
-            else()
-                set(RESULT_PATH ${PATH})
-            endif()
-            target_include_directories(
-                   ${PROJECT_NAME}
-                   PUBLIC
-                   $<${INTERFACE_TYPE}_INTERFACE:${RESULT_PATH}>
-            )
-        endforeach()
-    endmacro()
-    _AddIncludes(BUILD ${ARG_BUILD})
-    _AddIncludes(INSTALL ${ARG_INSTALL})
+    foreach (PATH IN ITEMS ${ARG_BUILD})
+        cmake_path(IS_RELATIVE PATH IS_PATH_RELATIVE)
+        if (IS_PATH_RELATIVE)
+            set(RESULT_PATH ${PROJECT_SOURCE_DIR}/include/${PATH})
+        else()
+            set(RESULT_PATH ${PATH})
+        endif()
+        target_include_directories(
+               ${PROJECT_NAME}
+               ${SEAL_LAKE_DEFAULT_SCOPE}
+               $<BUILD_INTERFACE:${RESULT_PATH}>
+        )
+    endforeach()
+    foreach (PATH IN ITEMS ${ARG_INSTALL})
+        cmake_path(IS_RELATIVE PATH IS_PATH_RELATIVE)
+        if (IS_PATH_RELATIVE)
+            set(RESULT_PATH ${CMAKE_INSTALL_INCLUDEDIR}/${PATH})
+        else()
+            set(RESULT_PATH ${PATH})
+        endif()
+        target_include_directories(
+               ${PROJECT_NAME}
+               ${SEAL_LAKE_DEFAULT_SCOPE}
+               $<INSTALL_INTERFACE:${RESULT_PATH}>
+        )
+    endforeach()
 endfunction()
 
 function (SealLake_Libraries)
