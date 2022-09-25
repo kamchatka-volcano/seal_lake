@@ -101,7 +101,9 @@ function(SealLake_Executable)
         "PROPERTIES;COMPILE_FEATURES;SOURCES;INCLUDES;LIBRARIES"
         ${ARGN}
     )
-    set(${SEAL_LAKE_DEFAULT_SCOPE} PRIVATE PARENT_SCOPE)
+    set(SEAL_LAKE_LIB_TYPE "")
+    set(SEAL_LAKE_LIB_TYPE "" PARENT_SCOPE)
+    set(SEAL_LAKE_DEFAULT_SCOPE PRIVATE PARENT_SCOPE)
     set(SEAL_LAKE_DEFAULT_SCOPE PRIVATE)
 
     if ("Threads::Threads" IN_LIST ARG_LIBRARIES)
@@ -134,7 +136,9 @@ function (SealLake_GoogleTest)
         "PROPERTIES;COMPILE_FEATURES;SOURCES;INCLUDES;LIBRARIES"
         ${ARGN}
     )
-    set(${SEAL_LAKE_DEFAULT_SCOPE} PRIVATE PARENT_SCOPE)
+    set(SEAL_LAKE_LIB_TYPE "")
+    set(SEAL_LAKE_LIB_TYPE "" PARENT_SCOPE)
+    set(SEAL_LAKE_DEFAULT_SCOPE PRIVATE PARENT_SCOPE)
     set(SEAL_LAKE_DEFAULT_SCOPE PRIVATE)
 
     if (NOT ARG_SKIP_FETCHING)
@@ -162,18 +166,8 @@ function (SealLake_GoogleTest)
 endfunction()
 
 function (SealLake_Properties)
-    list(LENGTH ARGN PROPERTIES_LENGTH)
-    MATH(EXPR PROPERTY_LAST_INDEX "${PROPERTIES_LENGTH} - 2")
-    if (PROPERTIES_LENGTH GREATER 1)
-        foreach(PROPERTY_INDEX RANGE 0 ${PROPERTY_LAST_INDEX} 2)
-            list(GET ARGN ${PROPERTY_INDEX} PROPERTY_NAME)
-            MATH(EXPR PROPERTY_INDEX "${PROPERTY_INDEX}+1")
-            list(GET ARGN ${PROPERTY_INDEX} PROPERTY_VALUE)
-            message("Set property ${PROPERTY_NAME} ${PROPERTY_VALUE}")
-            if (PROPERTY_NAME AND PROPERTY_VALUE)
-                set_target_properties(${PROJECT_NAME} PROPERTIES ${PROPERTY_NAME} "${PROPERTY_VALUE}")
-            endif()
-        endforeach()
+    if (ARGN)
+        set_target_properties(${PROJECT_NAME} PROPERTIES ${ARGN})
     endif()
 endfunction()
 
