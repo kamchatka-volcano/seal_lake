@@ -237,7 +237,7 @@ function (SealLake_Libraries)
         endforeach()
     endmacro()
     _AddLibraries(PRIVATE ${ARG_BUILD})
-    _AddLibraries(PUBLIC ${ARG_INSTALL})
+    _AddLibraries(${SEAL_LAKE_DEFAULT_SCOPE} ${ARG_INSTALL})
 endfunction()
 
 function (SealLake_OptionalBuildSteps)
