@@ -30,11 +30,27 @@ macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
         set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${ARG_PUBLIC_HEADERS}")
     endif()
     SealLake_CompileFeatures(${ARG_COMPILE_FEATURES})
-    SealLake_Includes(
-            INSTALL ${ARG_INCLUDES}
-            BUILD ${ARG_BUILD_INCLUDES}
-    )
-    SealLake_Libraries(INSTALL ${ARG_INSTALL_LIBRARIES} BUILD ${ARG_LIBRARIES})
+
+    if (ARG_INCLUDES)
+        SealLake_Includes(${ARG_INCLUDES})
+    endif()
+    if (ARG_BUILD_STAGE_INCLUDES)
+        SealLake_BuildStageIncludes(${ARG_BUILD_STAGE_INCLUDES})
+    endif()
+    if (ARG_INTERFACE_INCLUDES)
+        SealLake_InterfaceIncludes(${ARG_INTERFACE_INCLUDES})
+    endif()
+
+    if (ARG_LIBRARIES)
+        SealLake_Libraries(${ARG_LIBRARIES})
+    endif()
+    if (ARG_BUILD_STAGE_LIBRARIES)
+        SealLake_BuildStageLibraries(${ARG_BUILD_STAGE_LIBRARIES})
+    endif()
+    if (ARG_INTERFACE_LIBRARIES)
+        SealLake_InterfaceLibraries(${ARG_INTERFACE_LIBRARIES})
+    endif()
+
     SealLake_CheckStandalone(IS_STANDALONE)
     string(TOUPPER ${PROJECT_NAME} VARNAME)
     set(${INSTALL_${VARNAME}} "Install ${PROJECT_NAME}" OFF PARENT_SCOPE)
@@ -57,7 +73,7 @@ function(SealLake_HeaderOnlyLibrary)
         ARG
         ""
         ""
-        "PROPERTIES;COMPILE_FEATURES;INCLUDES;BUILD_INCLUDES;INSTALL_LIBRARIES"
+        "PROPERTIES;COMPILE_FEATURES;INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES"
         ${ARGN}
     )
     _SealLakeImpl_Library(INTERFACE INTERFACE "")
@@ -68,7 +84,7 @@ function(SealLake_StaticLibrary)
         ARG
         ""
         ""
-        "PROPERTIES;COMPILE_FEATURES;SOURCES;PUBLIC_HEADERS;INCLUDES;BUILD_INCLUDES;LIBRARIES;INSTALL_LIBRARIES"
+        "PROPERTIES;COMPILE_FEATURES;SOURCES;PUBLIC_HEADERS;INCLUDES;INTERFACE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES"
         ${ARGN}
     )
     string(TOUPPER ${PROJECT_NAME} VARNAME)
@@ -87,7 +103,7 @@ function(SealLake_SharedLibrary)
         ARG
         ""
         ""
-        "PROPERTIES;COMPILE_FEATURES;SOURCES;PUBLIC_HEADERS;INCLUDES;BUILD_INCLUDES;LIBRARIES;INSTALL_LIBRARIES"
+        "PROPERTIES;COMPILE_FEATURES;SOURCES;PUBLIC_HEADERS;INCLUDES;INTERFACE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES"
         ${ARGN}
     )
     _SealLakeImpl_Library(SHARED PUBLIC LIBRARY)
@@ -115,7 +131,7 @@ function(SealLake_Executable)
     target_include_directories(${PROJECT_NAME} PRIVATE ${ARG_INCLUDES})
     SealLake_Properties(${ARG_PROPERTIES})
     SealLake_CompileFeatures(${ARG_COMPILE_FEATURES})
-    SealLake_Libraries(BUILD ${ARG_LIBRARIES})
+    SealLake_Libraries(${ARG_LIBRARIES})
     SealLake_CheckStandalone(IS_STANDALONE)
     string(TOUPPER ${PROJECT_NAME} VARNAME)
     set(${INSTALL_${VARNAME}} "Install ${PROJECT_NAME}" OFF PARENT_SCOPE)
@@ -158,10 +174,7 @@ function (SealLake_GoogleTest)
     target_include_directories(${PROJECT_NAME} PRIVATE ${ARG_INCLUDES})
     SealLake_Properties(${ARG_PROPERTIES})
     SealLake_CompileFeatures(${ARG_COMPILE_FEATURES})
-    SealLake_Libraries(
-            BUILD
-                ${ARG_LIBRARIES} Threads::Threads GTest::gtest_main GTest::gmock_main
-    )
+    SealLake_Libraries(${ARG_LIBRARIES} Threads::Threads GTest::gtest_main GTest::gmock_main)
     gtest_discover_tests(${PROJECT_NAME})
 endfunction()
 
@@ -178,14 +191,15 @@ function (SealLake_CompileFeatures)
 endfunction()
 
 function (SealLake_Includes)
-    cmake_parse_arguments(
-        ARG
-        ""
-        ""
-        "BUILD;INSTALL"
-        ${ARGN}
-    )
-    foreach (PATH IN ITEMS ${ARG_BUILD})
+  if (SEAL_LAKE_LIB_TYPE STREQUAL INTERFACE)
+        SealLake_InterfaceIncludes(${ARGN})
+    else()
+        SealLake_BuildStageIncludes(${ARGN})
+    endif()
+endfunction()
+
+function(SealLake_BuildStageIncludes)
+     foreach (PATH IN ITEMS ${ARGN})
         cmake_path(IS_RELATIVE PATH IS_PATH_RELATIVE)
         if (IS_PATH_RELATIVE)
             set(RESULT_PATH ${PROJECT_SOURCE_DIR}/include/${PATH})
@@ -198,7 +212,10 @@ function (SealLake_Includes)
                $<BUILD_INTERFACE:${RESULT_PATH}>
         )
     endforeach()
-    foreach (PATH IN ITEMS ${ARG_INSTALL})
+endfunction()
+
+function (SealLake_InterfaceIncludes)
+    foreach (PATH IN ITEMS ${ARGN})
         cmake_path(IS_RELATIVE PATH IS_PATH_RELATIVE)
         if (IS_PATH_RELATIVE)
             set(RESULT_PATH ${CMAKE_INSTALL_INCLUDEDIR}/${PATH})
@@ -214,31 +231,38 @@ function (SealLake_Includes)
 endfunction()
 
 function (SealLake_Libraries)
-    cmake_parse_arguments(
-        ARG
-        ""
-        ""
-        "BUILD;INSTALL"
-        ${ARGN}
-    )
+    if (SEAL_LAKE_LIB_TYPE STREQUAL INTERFACE)
+        SealLake_InterfaceLibraries(${ARGN})
+    else()
+        SealLake_BuildStageLibraries(${ARGN})
+    endif()
+endfunction()
 
-    if (SEAL_LAKE_LIB_TYPE STREQUAL INTERFACE AND ARG_BUILD)
-        message(WARNING "Header only library don't have a build stage to establish a build link dependency")
+function (SealLake_InterfaceLibraries)
+    foreach (LIB IN ITEMS ${ARGN})
+        message("Link ${LIB}")
+        target_link_libraries(${PROJECT_NAME} ${SEAL_LAKE_DEFAULT_SCOPE} ${LIB})
+    endforeach()
+endfunction()
+
+function (SealLake_BuildStageLibraries)
+    if (SEAL_LAKE_LIB_TYPE STREQUAL INTERFACE)
+        message(WARNING "Header only libraries don't have a build stage to establish a build link dependency")
+        return()
     endif()
 
-    macro(_AddLibraries SCOPE)
-        foreach (LIB IN ITEMS ${ARGN})
-            message("Link ${LIB}")
-            if (SEAL_LAKE_LIB_TYPE STREQUAL STATIC AND ${SCOPE} STREQUAL PRIVATE)
-                target_link_libraries(${PROJECT_NAME} ${SCOPE} "$<BUILD_INTERFACE:${LIB}>")
-            else()
-                target_link_libraries(${PROJECT_NAME} ${SCOPE} ${LIB})
-            endif()
-        endforeach()
-    endmacro()
-    _AddLibraries(PRIVATE ${ARG_BUILD})
-    _AddLibraries(${SEAL_LAKE_DEFAULT_SCOPE} ${ARG_INSTALL})
+    foreach (LIB IN ITEMS ${ARGN})
+        message("Link ${LIB}")
+        if (SEAL_LAKE_LIB_TYPE STREQUAL STATIC)
+            target_link_libraries(${PROJECT_NAME} PRIVATE "$<BUILD_INTERFACE:${LIB}>")
+        else()
+            target_link_libraries(${PROJECT_NAME} PRIVATE ${LIB})
+        endif()
+    endforeach()
 endfunction()
+
+
+
 
 function (SealLake_OptionalBuildSteps)
     cmake_parse_arguments(
