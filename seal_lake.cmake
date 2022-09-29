@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 set(SEAL_LAKE_LIB_TYPE "")
 set(SEAL_LAKE_DEFAULT_SCOPE "")
+
 include(FetchContent)
 
 macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
@@ -414,9 +415,46 @@ function (SealLake_FindOrInclude NAME VERSION MODULE)
     endif()
 endfunction()
 
+function(SealLake_Download)
+    cmake_parse_arguments(
+        ARG
+        ""
+        "GIT_REPOSITORY;GIT_TAG;DESTINATION"
+        "FILES;DIRECTORIES"
+        ${ARGN}
+    )
+    include(FetchContent)
+    SealLake_StringAfterLast(${ARG_GIT_REPOSITORY} "/" GIT_REPOSITORY_NAME)
+    string(TOLOWER ${GIT_REPOSITORY_NAME} GIT_REPOSITORY_NAME)
+    set(DOWNLOAD_TARGET "${GIT_REPOSITORY_NAME}_${ARG_GIT_TAG}")
+
+    FetchContent_Declare(
+            ${DOWNLOAD_TARGET}
+            GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
+            GIT_TAG        ${ARG_GIT_TAG}
+            GIT_SHALLOW    ON
+            GIT_PROGRESS TRUE
+    )
+    FetchContent_GetProperties(${DOWNLOAD_TARGET})
+    if(NOT "${DOWNLOAD_TARGET}_POPULATED")
+        FetchContent_Populate(${DOWNLOAD_TARGET})
+        foreach(FILE_MASK IN ITEMS ${ARG_FILES})
+            file(GLOB SRC_FILES "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${FILE_MASK}")
+            foreach(SRC IN ITEMS ${SRC_FILES})
+                message("Copy file: ${SRC} to ${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
+                file(COPY "${SRC}" DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
+            endforeach()
+        endforeach()
+        foreach(DIR IN ITEMS ${ARG_DIRECTORIES})
+            message("Copy directory ${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR} to ${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
+            file(COPY "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR}" DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
+        endforeach()
+    endif()
+endfunction()
+
 function(SealLake_ReplaceInFiles SRC_FILE_MASK DST_PATH FROM_STR TO_STR)
     file(GLOB SRC_FILES "${SRC_FILE_MASK}")
-    foreach(SRC_FILE ${SRC_FILES})
+    foreach(SRC_FILE IN ITEMS ${SRC_FILES})
         file(READ "${SRC_FILE}" SRC_FILE_CONTENTS)
         string(REPLACE "${FROM_STR}" "${TO_STR}" DST_FILE_CONTENTS "${SRC_FILE_CONTENTS}")
         get_filename_component(DST_FILE_NAME "${SRC_FILE}" NAME)
