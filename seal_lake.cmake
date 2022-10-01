@@ -18,7 +18,11 @@ macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
     endif()
 
     add_library(${PROJECT_NAME} ${LIBRARY_TYPE} ${ARG_SOURCES})
-    add_library("${PROJECT_NAME}::${PROJECT_NAME}" ALIAS ${PROJECT_NAME})
+    if (ARG_NAMESPACE)
+        add_library("${ARG_NAMESPACE}::${PROJECT_NAME}" ALIAS ${PROJECT_NAME})
+    else()
+        add_library("${PROJECT_NAME}::${PROJECT_NAME}" ALIAS ${PROJECT_NAME})
+    endif()
     target_include_directories(
             ${PROJECT_NAME}
             ${LIBRARY_SCOPE}
@@ -73,7 +77,7 @@ function(SealLake_HeaderOnlyLibrary)
     cmake_parse_arguments(
         ARG
         ""
-        ""
+        "NAMESPACE"
         "PROPERTIES;COMPILE_FEATURES;INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES"
         ${ARGN}
     )
@@ -84,7 +88,7 @@ function(SealLake_StaticLibrary)
     cmake_parse_arguments(
         ARG
         ""
-        ""
+        "NAMESPACE"
         "PROPERTIES;COMPILE_FEATURES;SOURCES;PUBLIC_HEADERS;INCLUDES;INTERFACE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES"
         ${ARGN}
     )
@@ -103,7 +107,7 @@ function(SealLake_SharedLibrary)
     cmake_parse_arguments(
         ARG
         ""
-        ""
+        "NAMESPACE"
         "PROPERTIES;COMPILE_FEATURES;SOURCES;PUBLIC_HEADERS;INCLUDES;INTERFACE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES"
         ${ARGN}
     )
