@@ -416,6 +416,9 @@ function (SealLake_FindOrDownload NAME VERSION)
                 GIT_PROGRESS TRUE
         )
         FetchContent_MakeAvailable(${NAME})
+        set(${NAME}_POPULATED "${${NAME}_POPULATED}" PARENT_SCOPE)
+        set(${NAME}_SOURCE_DIR "${${NAME}_SOURCE_DIR}" PARENT_SCOPE)
+        set(${NAME}_BINARY_DIR "${${NAME}_BINARY_DIR}" PARENT_SCOPE)
     endif()
 endfunction()
 
