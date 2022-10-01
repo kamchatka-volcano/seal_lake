@@ -400,7 +400,7 @@ function (SealLake_FindOrDownload NAME VERSION)
     cmake_parse_arguments(
         ARG
         ""
-        "GIT_REPOSITORY;GIT_TAG"
+        "URL;GIT_REPOSITORY;GIT_TAG"
         ""
         ${ARGN}
     )
@@ -408,13 +408,20 @@ function (SealLake_FindOrDownload NAME VERSION)
     if (NOT ${${NAME}_FOUND})
         message("Configuration info: ${NAME} wasn't found on your system, proceeding to downloading it.")
         Set(FETCHCONTENT_QUIET FALSE)
-        FetchContent_Declare(
-                ${NAME}
-                GIT_REPOSITORY  ${ARG_GIT_REPOSITORY}
-                GIT_TAG        ${ARG_GIT_TAG}
-                GIT_SHALLOW    ON
-                GIT_PROGRESS TRUE
-        )
+        if (ARG_URL)
+            FetchContent_Declare(
+                    ${NAME}
+                    URL ${ARG_URL}
+            )
+        else()
+            FetchContent_Declare(
+                    ${NAME}
+                    GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
+                    GIT_TAG        ${ARG_GIT_TAG}
+                    GIT_SHALLOW    ON
+                    GIT_PROGRESS TRUE
+            )
+        endif()
         FetchContent_MakeAvailable(${NAME})
         set(${NAME}_POPULATED "${${NAME}_POPULATED}" PARENT_SCOPE)
         set(${NAME}_SOURCE_DIR "${${NAME}_SOURCE_DIR}" PARENT_SCOPE)
@@ -433,7 +440,7 @@ function(SealLake_Download)
     cmake_parse_arguments(
         ARG
         ""
-        "GIT_REPOSITORY;GIT_TAG;DESTINATION"
+        "URL;GIT_REPOSITORY;GIT_TAG;DESTINATION"
         "FILES;DIRECTORIES"
         ${ARGN}
     )
@@ -442,6 +449,12 @@ function(SealLake_Download)
     string(TOLOWER ${GIT_REPOSITORY_NAME} GIT_REPOSITORY_NAME)
     set(DOWNLOAD_TARGET "${GIT_REPOSITORY_NAME}_${ARG_GIT_TAG}")
 
+    if (ARG_URL)
+    FetchContent_Declare(
+            ${DOWNLOAD_TARGET}
+            URL ${ARG_URL}
+    )
+    else()
     FetchContent_Declare(
             ${DOWNLOAD_TARGET}
             GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
@@ -449,6 +462,7 @@ function(SealLake_Download)
             GIT_SHALLOW    ON
             GIT_PROGRESS TRUE
     )
+    endif()
     FetchContent_GetProperties(${DOWNLOAD_TARGET})
     if(NOT "${DOWNLOAD_TARGET}_POPULATED")
         FetchContent_Populate(${DOWNLOAD_TARGET})
