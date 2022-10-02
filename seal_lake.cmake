@@ -447,23 +447,24 @@ function(SealLake_Download)
         ${ARGN}
     )
     include(FetchContent)
-    SealLake_StringAfterLast(${ARG_GIT_REPOSITORY} "/" GIT_REPOSITORY_NAME)
-    string(TOLOWER ${GIT_REPOSITORY_NAME} GIT_REPOSITORY_NAME)
-    set(DOWNLOAD_TARGET "${GIT_REPOSITORY_NAME}_${ARG_GIT_TAG}")
-
     if (ARG_URL)
-    FetchContent_Declare(
-            ${DOWNLOAD_TARGET}
-            URL ${ARG_URL}
-    )
+        SealLake_StringAfterLast(${ARG_URL} "/" URL_NAME)
+        string(TOLOWER ${URL_NAME} DOWNLOAD_TARGET)
+        FetchContent_Declare(
+                ${DOWNLOAD_TARGET}
+                URL ${ARG_URL}
+        )
     else()
-    FetchContent_Declare(
-            ${DOWNLOAD_TARGET}
-            GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
-            GIT_TAG        ${ARG_GIT_TAG}
-            GIT_SHALLOW    ON
-            GIT_PROGRESS TRUE
-    )
+        SealLake_StringAfterLast(${ARG_GIT_REPOSITORY} "/" GIT_REPOSITORY_NAME)
+        string(TOLOWER ${GIT_REPOSITORY_NAME} GIT_REPOSITORY_NAME)
+        set(DOWNLOAD_TARGET "${GIT_REPOSITORY_NAME}_${ARG_GIT_TAG}")
+        FetchContent_Declare(
+                ${DOWNLOAD_TARGET}
+                GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
+                GIT_TAG        ${ARG_GIT_TAG}
+                GIT_SHALLOW    ON
+                GIT_PROGRESS TRUE
+        )
     endif()
     FetchContent_GetProperties(${DOWNLOAD_TARGET})
     if(NOT "${DOWNLOAD_TARGET}_POPULATED")
