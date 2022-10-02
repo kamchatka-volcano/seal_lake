@@ -319,15 +319,15 @@ function (SealLake_Install)
     cmake_parse_arguments(
             ARG
             ""
-            "PATH"
+            "DESTINATION"
             "FILES;DIRECTORIES"
             ${ARGN}
     )
-    if(ARG_PATH)
-        if (IS_ABSOLUTE ${ARG_PATH})
-            set(DESTINATION_PATH ${ARG_PATH})
+    if(ARG_DESTINATION)
+        if (IS_ABSOLUTE ${ARG_DESTINATION})
+            set(DESTINATION_PATH ${ARG_DESTINATION})
         else()
-            set(DESTINATION_PATH ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/${ARG_PATH})
+            set(DESTINATION_PATH ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/${ARG_DESTINATION})
         endif()
     else()
         set(DESTINATION_PATH ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
@@ -467,16 +467,6 @@ function(SealLake_Download)
             file(COPY "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR}" DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
         endforeach()
     endif()
-endfunction()
-
-function(SealLake_ReplaceInFiles SRC_FILE_MASK DST_PATH FROM_STR TO_STR)
-    file(GLOB SRC_FILES "${SRC_FILE_MASK}")
-    foreach(SRC_FILE IN ITEMS ${SRC_FILES})
-        file(READ "${SRC_FILE}" SRC_FILE_CONTENTS)
-        string(REPLACE "${FROM_STR}" "${TO_STR}" DST_FILE_CONTENTS "${SRC_FILE_CONTENTS}")
-        get_filename_component(DST_FILE_NAME "${SRC_FILE}" NAME)
-        file(WRITE "${DST_PATH}/${DST_FILE_NAME}" "${DST_FILE_CONTENTS}")
-    endforeach()
 endfunction()
 
 function(_SealLakeImpl_StringBefore STR VALUE RESULT REVERSE)
