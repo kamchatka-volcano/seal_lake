@@ -172,7 +172,7 @@ function (SealLake_GoogleTest)
     if (NOT ARG_SKIP_FETCHING)
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
         set(INSTALL_GTEST OFF)
-        SealLake_FindOrDownload(googletest 1.12.1
+        SealLake_Import(googletest 1.12.1
           GIT_REPOSITORY https://github.com/google/googletest.git
           GIT_TAG release-1.12.1
         )
@@ -385,17 +385,22 @@ function(SealLake_InstallPackage)
     )
 endfunction()
 
-function (SealLake_FindOrDownload NAME VERSION)
+function (SealLake_Import NAME VERSION)
     cmake_parse_arguments(
         ARG
         ""
-        "URL;GIT_REPOSITORY;GIT_TAG"
+        "CMAKE_FILE;URL;GIT_REPOSITORY;GIT_TAG"
         ""
         ${ARGN}
     )
     find_package(${NAME} ${VERSION} QUIET)
     if (NOT ${${NAME}_FOUND})
-        message("Configuration info: ${NAME} wasn't found on your system, proceeding to downloading it.")
+        if (ARG_CMAKE_FILE)
+            message("${NAME} wasn't found on your system, proceeding to use instructions from config ${ARG_CMAKE_FILE}.")
+            include("${ARG_CMAKE_FILE}")
+            return()
+        endif()
+        message("${NAME} wasn't found on your system, proceeding to downloading it.")
         Set(FETCHCONTENT_QUIET FALSE)
         if (ARG_URL)
             FetchContent_Declare(
@@ -415,13 +420,6 @@ function (SealLake_FindOrDownload NAME VERSION)
         set(${NAME}_POPULATED "${${NAME}_POPULATED}" PARENT_SCOPE)
         set(${NAME}_SOURCE_DIR "${${NAME}_SOURCE_DIR}" PARENT_SCOPE)
         set(${NAME}_BINARY_DIR "${${NAME}_BINARY_DIR}" PARENT_SCOPE)
-    endif()
-endfunction()
-
-function (SealLake_FindOrInclude NAME VERSION MODULE)
-    find_package(${NAME} ${VERSION} QUIET)
-    if (NOT ${${NAME}_FOUND})
-        include("${MODULE}")
     endif()
 endfunction()
 
