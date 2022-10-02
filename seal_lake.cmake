@@ -71,7 +71,7 @@ macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
         else()
             install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
         endif()
-        SealLake_InstallPackage(COMPATIBILITY SameMajorVersion)
+        SealLake_InstallPackage(COMPATIBILITY SameMajorVersion NAMESPACE ${ARG_NAMESPACE})
     endif()
 endmacro()
 
@@ -350,10 +350,10 @@ endfunction()
 
 
 function(SealLake_InstallPackage)
-   cmake_parse_arguments(
+    cmake_parse_arguments(
         ARG
         ""
-        "COMPATIBILITY"
+        "COMPATIBILITY;NAMESPACE"
         ""
         ${ARGN}
     )
@@ -362,9 +362,16 @@ function(SealLake_InstallPackage)
     install(TARGETS "${PROJECT_NAME}"
             EXPORT "${PROJECT_NAME}-targets"
     )
+
+    if (ARG_NAMESPACE)
+        set(NAMESPACE ${ARG_NAMESPACE})
+    else()
+        set(NAMESPACE ${PROJECT_NAME})
+    endif()
+
     install(EXPORT "${PROJECT_NAME}-targets"
             FILE "${PROJECT_NAME}Targets.cmake"
-            NAMESPACE "${PROJECT_NAME}::"
+            NAMESPACE "${NAMESPACE}::"
             DESTINATION "${PACK_PATH}"
     )
 
