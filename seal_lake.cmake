@@ -71,7 +71,11 @@ macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
         else()
             install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
         endif()
-        SealLake_InstallPackage(COMPATIBILITY SameMajorVersion NAMESPACE ${ARG_NAMESPACE})
+        SealLake_InstallPackage(
+                COMPATIBILITY SameMajorVersion
+                NAMESPACE ${ARG_NAMESPACE}
+                DEPENDENCIES ${ARG_DEPENDENCIES}
+        )
     endif()
 endmacro()
 
@@ -80,7 +84,7 @@ function(SealLake_HeaderOnlyLibrary)
         ARG
         ""
         "NAMESPACE"
-        "PROPERTIES;COMPILE_FEATURES;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;PUBLIC_HEADERS;SOURCES;BUILD_STAGE_LIBRARIES"
+        "PROPERTIES;COMPILE_FEATURES;DEPENDENCIES;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;PUBLIC_HEADERS;SOURCES;BUILD_STAGE_LIBRARIES"
         ${ARGN}
     )
     if (ARG_PUBLIC_HEADERS)
@@ -100,7 +104,7 @@ function(SealLake_StaticLibrary)
         ARG
         ""
         "NAMESPACE"
-        "PROPERTIES;COMPILE_FEATURES;SOURCES;PUBLIC_HEADERS;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;BUILD_STAGE_LIBRARIES;"
+        "PROPERTIES;COMPILE_FEATURES;DEPENDENCIES;SOURCES;PUBLIC_HEADERS;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;BUILD_STAGE_LIBRARIES;"
         ${ARGN}
     )
     string(TOUPPER ${PROJECT_NAME} VARNAME)
@@ -119,7 +123,7 @@ function(SealLake_SharedLibrary)
         ARG
         ""
         "NAMESPACE"
-        "PROPERTIES;COMPILE_FEATURES;SOURCES;PUBLIC_HEADERS;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;BUILD_STAGE_LIBRARIES"
+        "PROPERTIES;COMPILE_FEATURES;DEPENDENCIES;SOURCES;PUBLIC_HEADERS;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;BUILD_STAGE_LIBRARIES"
         ${ARGN}
     )
     _SealLakeImpl_Library(SHARED PUBLIC LIBRARY)
@@ -354,7 +358,7 @@ function(SealLake_InstallPackage)
         ARG
         ""
         "COMPATIBILITY;NAMESPACE"
-        ""
+        "DEPENDENCIES"
         ${ARGN}
     )
     set(PACK_PATH "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
@@ -376,12 +380,16 @@ function(SealLake_InstallPackage)
     )
 
     include(CMakePackageConfigHelpers)
+    SealLake_WritePackageConfigInput(
+            FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake.in"
+            DEPENDENCIES ${ARG_DEPENDENCIES}
+    )
     write_basic_package_version_file(
             "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
             COMPATIBILITY "${ARG_COMPATIBILITY}"
             ARCH_INDEPENDENT
     )
-    configure_package_config_file("${CMAKE_CURRENT_LIST_DIR}/cmake/${PROJECT_NAME}Config.cmake.in"
+    configure_package_config_file("${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake.in"
             "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
             INSTALL_DESTINATION "${PACK_PATH}"
     )
@@ -472,6 +480,44 @@ function(SealLake_Download)
             file(COPY "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR}" DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
         endforeach()
     endif()
+endfunction()
+
+function (SealLake_WritePackageConfigInput)
+    cmake_parse_arguments(
+        ARG
+        ""
+        "FILE"
+        "DEPENDENCIES"
+        ${ARGN}
+    )
+
+    set(RESULT "@PACKAGE_INIT@
+    include(CMakeFindDependencyMacro)
+    ")
+
+    list(LENGTH ARG_DEPENDENCIES DEPS_LENGTH)
+    MATH(EXPR DEP_LAST_INDEX "${DEPS_LENGTH} - 2")
+    if (DEPS_LENGTH GREATER 1)
+        foreach(DEP_INDEX RANGE 0 ${DEP_LAST_INDEX} 2)
+            list(GET ARG_DEPENDENCIES ${DEP_INDEX} DEP_NAME)
+            MATH(EXPR DEP_INDEX "${DEP_INDEX}+1")
+            list(GET ARG_DEPENDENCIES ${DEP_INDEX} DEP_VERSION)
+            if (DEP_NAME)
+                if (DEP_VERSION)
+                    string(APPEND RESULT "find_dependency(${DEP_NAME} ${DEP_VERSION})
+    ")
+                else()
+                    string(APPEND RESULT "find_dependency(${DEP_NAME})
+    ")
+                endif()
+            endif()
+        endforeach()
+    endif()
+    string(APPEND RESULT "include(\"$")
+    string(APPEND RESULT "{CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}Targets.cmake\")")
+
+
+    file(WRITE "${ARG_FILE}" ${RESULT})
 endfunction()
 
 function(_SealLakeImpl_StringBefore STR VALUE RESULT REVERSE)
