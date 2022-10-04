@@ -443,7 +443,7 @@ function(SealLake_Download)
         ARG
         ""
         "URL;GIT_REPOSITORY;GIT_TAG;DESTINATION"
-        "FILES;DIRECTORIES"
+        "FILES;DIRECTORIES;REPLACEMENTS"
         ${ARGN}
     )
     include(FetchContent)
@@ -473,13 +473,42 @@ function(SealLake_Download)
             file(GLOB SRC_FILES "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${FILE_MASK}")
             foreach(SRC IN ITEMS ${SRC_FILES})
                 message("Copy file: ${SRC} to ${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
-                file(COPY "${SRC}" DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
+                SealLake_FileCopy(SOURCE "${SRC}"
+                                  DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}"
+                                  REPLACEMENTS ${ARG_REPLACEMENTS})
             endforeach()
         endforeach()
         foreach(DIR IN ITEMS ${ARG_DIRECTORIES})
             message("Copy directory ${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR} to ${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
             file(COPY "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR}" DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
         endforeach()
+    endif()
+endfunction()
+
+function (SealLake_FileCopy)
+     cmake_parse_arguments(
+        ARG
+        ""
+        "SOURCE;DESTINATION"
+        "REPLACEMENTS"
+        ${ARGN}
+    )
+    list(LENGTH ARG_REPLACEMENTS REPLACEMENTS_LENGTH)
+    MATH(EXPR REPLACEMENT_LAST_INDEX "${REPLACEMENTS_LENGTH} - 2")
+    if (REPLACEMENTS_LENGTH GREATER 1)
+        file(READ "${ARG_SOURCE}" CONTENT)
+        foreach(REPLACEMENT_INDEX RANGE 0 ${REPLACEMENT_LAST_INDEX} 2)
+            list(GET ARG_REPLACEMENTS ${REPLACEMENT_INDEX} FROM_STR)
+            MATH(EXPR REPLACEMENT_INDEX "${REPLACEMENT_INDEX}+1")
+            list(GET ARG_REPLACEMENTS ${REPLACEMENT_INDEX} TO_STR)
+            if (FROM_STR)
+                string(REPLACE "${FROM_STR}" "${TO_STR}" CONTENT "${CONTENT}")
+                get_filename_component(DST_FILE "${ARG_SOURCE}" NAME)
+                file(WRITE "${ARG_DESTINATION}/${DST_FILE}" "${CONTENT}")
+            endif()
+        endforeach()
+    else()
+        file(COPY "${ARG_SOURCE}" DESTINATION "${ARG_DESTINATION}")
     endif()
 endfunction()
 
