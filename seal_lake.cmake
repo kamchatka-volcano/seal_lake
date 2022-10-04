@@ -480,7 +480,11 @@ function(SealLake_Download)
         endforeach()
         foreach(DIR IN ITEMS ${ARG_DIRECTORIES})
             message("Copy directory ${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR} to ${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
-            file(COPY "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR}" DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
+            SealLake_DirectoryCopy(
+                    SOURCE "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR}"
+                    DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}"
+                    REPLACEMENTS ${ARG_REPLACEMENTS}
+            )
         endforeach()
     endif()
 endfunction()
@@ -510,6 +514,24 @@ function (SealLake_FileCopy)
     else()
         file(COPY "${ARG_SOURCE}" DESTINATION "${ARG_DESTINATION}")
     endif()
+endfunction()
+
+function (SealLake_DirectoryCopy)
+     cmake_parse_arguments(
+        ARG
+        ""
+        "SOURCE;DESTINATION"
+        "REPLACEMENTS"
+        ${ARGN}
+    )
+    file(GLOB_RECURSE FILES "${ARG_SOURCE}/*")
+    foreach(FILE IN ITEMS ${FILES})
+        SealLake_StringAfterFirst(${FILE} "${ARG_SOURCE}" FILE_PATH)
+        SealLake_StringBeforeLast(${FILE_PATH} / FILE_DIR)
+        SealLake_FileCopy(SOURCE "${FILE}"
+                          DESTINATION "${ARG_DESTINATION}/${FILE_DIR}"
+                          REPLACEMENTS "${ARG_REPLACEMENTS}")
+    endforeach()
 endfunction()
 
 function (SealLake_WritePackageConfigInput)
