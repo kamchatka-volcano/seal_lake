@@ -5,80 +5,6 @@ set(SEAL_LAKE_DEFAULT_SCOPE "")
 
 include(FetchContent)
 
-macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
-    set(SEAL_LAKE_LIB_TYPE ${LIBRARY_TYPE})
-    set(SEAL_LAKE_DEFAULT_SCOPE ${LIBRARY_SCOPE})
-    set(SEAL_LAKE_LIB_TYPE ${LIBRARY_TYPE} PARENT_SCOPE)
-    set(SEAL_LAKE_DEFAULT_SCOPE ${LIBRARY_SCOPE} PARENT_SCOPE)
-
-
-    if ("Threads::Threads" IN_LIST ARG_LIBRARIES)
-        find_package(Threads REQUIRED)
-        set(THREADS_PREFER_PTHREAD_FLAG ON)
-    endif()
-
-    add_library(${PROJECT_NAME} ${LIBRARY_TYPE} ${ARG_SOURCES})
-    if (ARG_NAMESPACE)
-        add_library("${ARG_NAMESPACE}::${PROJECT_NAME}" ALIAS ${PROJECT_NAME})
-    else()
-        add_library("${PROJECT_NAME}::${PROJECT_NAME}" ALIAS ${PROJECT_NAME})
-    endif()
-    target_include_directories(
-            ${PROJECT_NAME}
-            ${LIBRARY_SCOPE}
-            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-    )
-
-    SealLake_Properties(${ARG_PROPERTIES})
-    if (ARG_PUBLIC_HEADERS)
-        set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${ARG_PUBLIC_HEADERS}")
-    endif()
-    SealLake_CompileFeatures(${ARG_COMPILE_FEATURES})
-
-    if (ARG_INCLUDES)
-        SealLake_Includes(${ARG_INCLUDES})
-    endif()
-    if (ARG_BUILD_STAGE_INCLUDES)
-        SealLake_BuildStageIncludes(${ARG_BUILD_STAGE_INCLUDES})
-    endif()
-    if (ARG_INTERFACE_INCLUDES)
-        SealLake_InterfaceIncludes(${ARG_INTERFACE_INCLUDES})
-    endif()
-
-    if (ARG_LIBRARIES)
-        SealLake_Libraries(${ARG_LIBRARIES})
-    endif()
-    if (ARG_BUILD_STAGE_LIBRARIES)
-        SealLake_BuildStageLibraries(${ARG_BUILD_STAGE_LIBRARIES})
-    endif()
-    if (ARG_INTERFACE_LIBRARIES)
-        SealLake_InterfaceLibraries(${ARG_INTERFACE_LIBRARIES})
-    endif()
-
-    SealLake_CheckStandalone(IS_STANDALONE)
-    string(TOUPPER ${PROJECT_NAME} VARNAME)
-    set(${INSTALL_${VARNAME}} "Install ${PROJECT_NAME}" OFF PARENT_SCOPE)
-    if (IS_STANDALONE OR INSTALL_${VARNAME})
-        if(${INSTALL_BUILD_RESULT})
-            install(TARGETS ${PROJECT_NAME}
-                    ${INSTALL_BUILD_RESULT} DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-                    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}"
-            )
-            if (NOT ARG_PUBLIC_HEADERS)
-                install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-            endif()
-        else()
-            install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-        endif()
-        SealLake_InstallPackage(
-                COMPATIBILITY SameMajorVersion
-                NAMESPACE ${ARG_NAMESPACE}
-                DEPENDENCIES ${ARG_DEPENDENCIES}
-        )
-    endif()
-endmacro()
-
 function(SealLake_HeaderOnlyLibrary)
     cmake_parse_arguments(
         ARG
@@ -380,7 +306,7 @@ function(SealLake_InstallPackage)
     )
 
     include(CMakePackageConfigHelpers)
-    SealLake_WritePackageConfigInput(
+    _SealLakeImpl_WritePackageConfigInput(
             FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake.in"
             DEPENDENCIES ${ARG_DEPENDENCIES}
     )
@@ -443,7 +369,7 @@ function(SealLake_Download)
         ARG
         ""
         "URL;GIT_REPOSITORY;GIT_TAG;DESTINATION"
-        "FILES;DIRECTORIES;REPLACEMENTS"
+        "FILES;DIRECTORIES;TEXT_REPLACEMENTS"
         ${ARGN}
     )
     include(FetchContent)
@@ -473,38 +399,136 @@ function(SealLake_Download)
             file(GLOB SRC_FILES "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${FILE_MASK}")
             foreach(SRC IN ITEMS ${SRC_FILES})
                 message("Copy file: ${SRC} to ${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
-                SealLake_FileCopy(SOURCE "${SRC}"
+                _SealLakeImpl_FileCopy(SOURCE "${SRC}"
                                   DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}"
-                                  REPLACEMENTS ${ARG_REPLACEMENTS})
+                                  TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS})
             endforeach()
         endforeach()
         foreach(DIR IN ITEMS ${ARG_DIRECTORIES})
             message("Copy directory ${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR} to ${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
-            SealLake_DirectoryCopy(
+            _SealLakeImpl_DirectoryCopy(
                     SOURCE "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR}"
                     DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}"
-                    REPLACEMENTS ${ARG_REPLACEMENTS}
+                    TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS}
             )
         endforeach()
     endif()
 endfunction()
 
-function (SealLake_FileCopy)
+function (SealLake_StringBeforeLast STR VALUE RESULT)
+        _SealLakeImpl_StringBefore(${STR} ${VALUE} RESULT_VALUE REVERSE)
+        set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
+endfunction()
+
+function (SealLake_StringBeforeFirst STR VALUE RESULT)
+        _SealLakeImpl_StringBefore(${STR} ${VALUE} RESULT_VALUE "")
+        set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
+endfunction()
+
+function (SealLake_StringAfterFirst STR VALUE RESULT)
+        _SealLakeImpl_StringAfter(${STR} ${VALUE} RESULT_VALUE "")
+        set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
+endfunction()
+
+function (SealLake_StringAfterLast STR VALUE RESULT)
+        _SealLakeImpl_StringAfter(${STR} ${VALUE} RESULT_VALUE REVERSE)
+        set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
+endfunction()
+
+########################################################################################################################
+######################################## HERE BE IMPLEMENTATION DETAILS ################################################
+########################################################################################################################
+
+macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
+    set(SEAL_LAKE_LIB_TYPE ${LIBRARY_TYPE})
+    set(SEAL_LAKE_DEFAULT_SCOPE ${LIBRARY_SCOPE})
+    set(SEAL_LAKE_LIB_TYPE ${LIBRARY_TYPE} PARENT_SCOPE)
+    set(SEAL_LAKE_DEFAULT_SCOPE ${LIBRARY_SCOPE} PARENT_SCOPE)
+
+
+    if ("Threads::Threads" IN_LIST ARG_LIBRARIES)
+        find_package(Threads REQUIRED)
+        set(THREADS_PREFER_PTHREAD_FLAG ON)
+    endif()
+
+    add_library(${PROJECT_NAME} ${LIBRARY_TYPE} ${ARG_SOURCES})
+    if (ARG_NAMESPACE)
+        add_library("${ARG_NAMESPACE}::${PROJECT_NAME}" ALIAS ${PROJECT_NAME})
+    else()
+        add_library("${PROJECT_NAME}::${PROJECT_NAME}" ALIAS ${PROJECT_NAME})
+    endif()
+    target_include_directories(
+            ${PROJECT_NAME}
+            ${LIBRARY_SCOPE}
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    )
+
+    SealLake_Properties(${ARG_PROPERTIES})
+    if (ARG_PUBLIC_HEADERS)
+        set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${ARG_PUBLIC_HEADERS}")
+    endif()
+    SealLake_CompileFeatures(${ARG_COMPILE_FEATURES})
+
+    if (ARG_INCLUDES)
+        SealLake_Includes(${ARG_INCLUDES})
+    endif()
+    if (ARG_BUILD_STAGE_INCLUDES)
+        SealLake_BuildStageIncludes(${ARG_BUILD_STAGE_INCLUDES})
+    endif()
+    if (ARG_INTERFACE_INCLUDES)
+        SealLake_InterfaceIncludes(${ARG_INTERFACE_INCLUDES})
+    endif()
+
+    if (ARG_LIBRARIES)
+        SealLake_Libraries(${ARG_LIBRARIES})
+    endif()
+    if (ARG_BUILD_STAGE_LIBRARIES)
+        SealLake_BuildStageLibraries(${ARG_BUILD_STAGE_LIBRARIES})
+    endif()
+    if (ARG_INTERFACE_LIBRARIES)
+        SealLake_InterfaceLibraries(${ARG_INTERFACE_LIBRARIES})
+    endif()
+
+    SealLake_CheckStandalone(IS_STANDALONE)
+    string(TOUPPER ${PROJECT_NAME} VARNAME)
+    set(${INSTALL_${VARNAME}} "Install ${PROJECT_NAME}" OFF PARENT_SCOPE)
+    if (IS_STANDALONE OR INSTALL_${VARNAME})
+        if(${INSTALL_BUILD_RESULT})
+            install(TARGETS ${PROJECT_NAME}
+                    ${INSTALL_BUILD_RESULT} DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+                    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}"
+            )
+            if (NOT ARG_PUBLIC_HEADERS)
+                install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+            endif()
+        else()
+            install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+        endif()
+        SealLake_InstallPackage(
+                COMPATIBILITY SameMajorVersion
+                NAMESPACE ${ARG_NAMESPACE}
+                DEPENDENCIES ${ARG_DEPENDENCIES}
+        )
+    endif()
+endmacro()
+
+function (_SealLakeImpl_FileCopy)
      cmake_parse_arguments(
         ARG
         ""
         "SOURCE;DESTINATION"
-        "REPLACEMENTS"
+        "TEXT_REPLACEMENTS"
         ${ARGN}
     )
-    list(LENGTH ARG_REPLACEMENTS REPLACEMENTS_LENGTH)
-    MATH(EXPR REPLACEMENT_LAST_INDEX "${REPLACEMENTS_LENGTH} - 2")
-    if (REPLACEMENTS_LENGTH GREATER 1)
+    list(LENGTH ARG_TEXT_REPLACEMENTS TEXT_REPLACEMENTS_LENGTH)
+    MATH(EXPR REPLACEMENT_LAST_INDEX "${TEXT_REPLACEMENTS_LENGTH} - 2")
+    if (TEXT_REPLACEMENTS_LENGTH GREATER 1)
         file(READ "${ARG_SOURCE}" CONTENT)
         foreach(REPLACEMENT_INDEX RANGE 0 ${REPLACEMENT_LAST_INDEX} 2)
-            list(GET ARG_REPLACEMENTS ${REPLACEMENT_INDEX} FROM_STR)
+            list(GET ARG_TEXT_REPLACEMENTS ${REPLACEMENT_INDEX} FROM_STR)
             MATH(EXPR REPLACEMENT_INDEX "${REPLACEMENT_INDEX}+1")
-            list(GET ARG_REPLACEMENTS ${REPLACEMENT_INDEX} TO_STR)
+            list(GET ARG_TEXT_REPLACEMENTS ${REPLACEMENT_INDEX} TO_STR)
             if (FROM_STR)
                 string(REPLACE "${FROM_STR}" "${TO_STR}" CONTENT "${CONTENT}")
                 get_filename_component(DST_FILE "${ARG_SOURCE}" NAME)
@@ -516,25 +540,25 @@ function (SealLake_FileCopy)
     endif()
 endfunction()
 
-function (SealLake_DirectoryCopy)
+function (_SealLakeImpl_DirectoryCopy)
      cmake_parse_arguments(
         ARG
         ""
         "SOURCE;DESTINATION"
-        "REPLACEMENTS"
+        "TEXT_REPLACEMENTS"
         ${ARGN}
     )
     file(GLOB_RECURSE FILES "${ARG_SOURCE}/*")
     foreach(FILE IN ITEMS ${FILES})
         SealLake_StringAfterFirst(${FILE} "${ARG_SOURCE}" FILE_PATH)
         SealLake_StringBeforeLast(${FILE_PATH} / FILE_DIR)
-        SealLake_FileCopy(SOURCE "${FILE}"
+        _SealLakeImpl_FileCopy(SOURCE "${FILE}"
                           DESTINATION "${ARG_DESTINATION}/${FILE_DIR}"
-                          REPLACEMENTS "${ARG_REPLACEMENTS}")
+                          TEXT_REPLACEMENTS "${ARG_TEXT_REPLACEMENTS}")
     endforeach()
 endfunction()
 
-function (SealLake_WritePackageConfigInput)
+function (_SealLakeImpl_WritePackageConfigInput)
     cmake_parse_arguments(
         ARG
         ""
@@ -588,25 +612,5 @@ function (_SealLakeImpl_StringAfter STR VALUE RESULT REVERSE)
         MATH(EXPR RESULT_POS "${VALUE_POS} + ${VALUE_LENGTH}")
         message("RESULT_LENGTH:${RESULT_LENGTH}")
         string(SUBSTRING ${STR} ${RESULT_POS} ${RESULT_LENGTH} RESULT_VALUE)
-        set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
-endfunction()
-
-function (SealLake_StringBeforeLast STR VALUE RESULT)
-        _SealLakeImpl_StringBefore(${STR} ${VALUE} RESULT_VALUE REVERSE)
-        set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
-endfunction()
-
-function (SealLake_StringBeforeFirst STR VALUE RESULT)
-        _SealLakeImpl_StringBefore(${STR} ${VALUE} RESULT_VALUE "")
-        set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
-endfunction()
-
-function (SealLake_StringAfterFirst STR VALUE RESULT)
-        _SealLakeImpl_StringAfter(${STR} ${VALUE} RESULT_VALUE "")
-        set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
-endfunction()
-
-function (SealLake_StringAfterLast STR VALUE RESULT)
-        _SealLakeImpl_StringAfter(${STR} ${VALUE} RESULT_VALUE REVERSE)
         set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
 endfunction()
