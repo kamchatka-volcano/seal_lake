@@ -550,7 +550,8 @@ function (_SealLakeImpl_DirectoryCopy)
     )
     file(GLOB_RECURSE FILES "${ARG_SOURCE}/*")
     foreach(FILE IN ITEMS ${FILES})
-        SealLake_StringAfterFirst(${FILE} "${ARG_SOURCE}" FILE_PATH)
+        SealLake_StringBeforeLast(${ARG_SOURCE} / ARG_SOURCE_PARENT)
+        SealLake_StringAfterFirst(${FILE} "${ARG_SOURCE_PARENT}" FILE_PATH)
         SealLake_StringBeforeLast(${FILE_PATH} / FILE_DIR)
         _SealLakeImpl_FileCopy(SOURCE "${FILE}"
                           DESTINATION "${ARG_DESTINATION}/${FILE_DIR}"
