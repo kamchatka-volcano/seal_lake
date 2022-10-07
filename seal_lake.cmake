@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 
 set(SEAL_LAKE_LIB_TYPE "")
 set(SEAL_LAKE_DEFAULT_SCOPE "")
+set(SEAL_LAKE_DEPENDENCIES "")
 
 include(FetchContent)
 
@@ -201,6 +202,13 @@ function (SealLake_BuildStageLibraries)
     endforeach()
 endfunction()
 
+function (SealLake_Dependencies)
+    list(APPEND DEPENDENCIES ${SEAL_LAKE_DEPENDENCIES})
+    list(APPEND DEPENDENCIES ${ARGN})
+    set(SEAL_LAKE_DEPENDENCIES ${DEPENDENCIES} PARENT_SCOPE)
+    _SealLakeImpl_CreatePackageConfig(DEPENDENCIES ${DEPENDENCIES})
+endfunction()
+
 function (SealLake_OptionalBuildSteps)
     cmake_parse_arguments(
         ARG
@@ -306,18 +314,12 @@ function(SealLake_InstallPackage)
     )
 
     include(CMakePackageConfigHelpers)
-    _SealLakeImpl_WritePackageConfigInput(
-            FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake.in"
-            DEPENDENCIES ${ARG_DEPENDENCIES}
-    )
+    _SealLakeImpl_CreatePackageConfig(DEPENDENCIES ${ARG_DEPENDENCIES})
+
     write_basic_package_version_file(
             "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
             COMPATIBILITY "${ARG_COMPATIBILITY}"
             ARCH_INDEPENDENT
-    )
-    configure_package_config_file("${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake.in"
-            "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-            INSTALL_DESTINATION "${PACK_PATH}"
     )
     install(FILES
             "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
@@ -444,7 +446,9 @@ macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
     set(SEAL_LAKE_DEFAULT_SCOPE ${LIBRARY_SCOPE})
     set(SEAL_LAKE_LIB_TYPE ${LIBRARY_TYPE} PARENT_SCOPE)
     set(SEAL_LAKE_DEFAULT_SCOPE ${LIBRARY_SCOPE} PARENT_SCOPE)
-
+    list(APPEND DEPENDENCIES ${SEAL_LAKE_DEPENDENCIES})
+    list(APPEND DEPENDENCIES ${ARG_DEPENDENCIES})
+    set(SEAL_LAKE_DEPENDENCIES ${DEPENDENCIES} PARENT_SCOPE)
 
     if ("Threads::Threads" IN_LIST ARG_LIBRARIES)
         find_package(Threads REQUIRED)
@@ -508,7 +512,7 @@ macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
         SealLake_InstallPackage(
                 COMPATIBILITY SameMajorVersion
                 NAMESPACE ${ARG_NAMESPACE}
-                DEPENDENCIES ${ARG_DEPENDENCIES}
+                DEPENDENCIES ${DEPENDENCIES}
         )
     endif()
 endmacro()
@@ -559,15 +563,16 @@ function (_SealLakeImpl_DirectoryCopy)
     endforeach()
 endfunction()
 
-function (_SealLakeImpl_WritePackageConfigInput)
+function (_SealLakeImpl_CreatePackageConfig)
     cmake_parse_arguments(
         ARG
         ""
-        "FILE"
+        ""
         "DEPENDENCIES"
         ${ARGN}
     )
 
+    include(CMakePackageConfigHelpers)
     set(RESULT "@PACKAGE_INIT@
     include(CMakeFindDependencyMacro)
     ")
@@ -593,8 +598,11 @@ function (_SealLakeImpl_WritePackageConfigInput)
     string(APPEND RESULT "include(\"$")
     string(APPEND RESULT "{CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}Targets.cmake\")")
 
-
-    file(WRITE "${ARG_FILE}" ${RESULT})
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake.in" ${RESULT})
+    configure_package_config_file("${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake.in"
+            "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+            INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+    )
 endfunction()
 
 function(_SealLakeImpl_StringBefore STR VALUE RESULT REVERSE)
