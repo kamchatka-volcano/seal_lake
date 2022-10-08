@@ -428,14 +428,14 @@ function(SealLake_Download)
         file(GLOB SRC_FILES "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${FILE_MASK}")
         foreach(SRC IN ITEMS ${SRC_FILES})
             SealLake_CopyFile(SOURCE "${SRC}"
-                              DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}"
+                              DESTINATION "${ARG_DESTINATION}"
                               TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS})
         endforeach()
     endforeach()
     foreach(DIR IN ITEMS ${ARG_DIRECTORIES})
         SealLake_CopyDirectory(
                 SOURCE "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR}"
-                DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}"
+                DESTINATION "${ARG_DESTINATION}"
                 TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS}
         )
     endforeach()
@@ -445,31 +445,45 @@ function (SealLake_CopyFile)
      cmake_parse_arguments(
         ARG
         ""
-        "SOURCE;DESTINATION"
-        "TEXT_REPLACEMENTS"
+        "DESTINATION"
+        "SOURCE;TEXT_REPLACEMENTS"
         ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
         SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
 
-    list(LENGTH ARG_TEXT_REPLACEMENTS TEXT_REPLACEMENTS_LENGTH)
-    MATH(EXPR REPLACEMENT_LAST_INDEX "${TEXT_REPLACEMENTS_LENGTH} - 2")
-    if (TEXT_REPLACEMENTS_LENGTH GREATER 1)
-        file(READ "${ARG_SOURCE}" CONTENT)
-        foreach(REPLACEMENT_INDEX RANGE 0 ${REPLACEMENT_LAST_INDEX} 2)
-            list(GET ARG_TEXT_REPLACEMENTS ${REPLACEMENT_INDEX} FROM_STR)
-            MATH(EXPR REPLACEMENT_INDEX "${REPLACEMENT_INDEX}+1")
-            list(GET ARG_TEXT_REPLACEMENTS ${REPLACEMENT_INDEX} TO_STR)
-            if (FROM_STR)
-                string(REPLACE "${FROM_STR}" "${TO_STR}" CONTENT "${CONTENT}")
-                get_filename_component(DST_FILE "${ARG_SOURCE}" NAME)
-                file(WRITE "${ARG_DESTINATION}/${DST_FILE}" "${CONTENT}")
+    foreach(FILE_MASK IN ITEMS ${ARG_SOURCE})
+        file(GLOB_RECURSE FILES "${FILE_MASK}")
+        message("FILES: ${FILES}")
+        foreach(FILE IN ITEMS ${FILES})
+            list(LENGTH ARG_TEXT_REPLACEMENTS TEXT_REPLACEMENTS_LENGTH)
+            MATH(EXPR REPLACEMENT_LAST_INDEX "${TEXT_REPLACEMENTS_LENGTH} - 2")
+            if (TEXT_REPLACEMENTS_LENGTH GREATER 1)
+                file(READ "${FILE}" CONTENT)
+                foreach(REPLACEMENT_INDEX RANGE 0 ${REPLACEMENT_LAST_INDEX} 2)
+                    list(GET ARG_TEXT_REPLACEMENTS ${REPLACEMENT_INDEX} FROM_STR)
+                    MATH(EXPR REPLACEMENT_INDEX "${REPLACEMENT_INDEX}+1")
+                    list(GET ARG_TEXT_REPLACEMENTS ${REPLACEMENT_INDEX} TO_STR)
+                    if (FROM_STR)
+                        string(REPLACE "${FROM_STR}" "${TO_STR}" CONTENT "${CONTENT}")
+                        get_filename_component(DST_FILE "${FILE}" NAME)
+                        if (IS_ABSOLUTE ${ARG_DESTINATION})
+                            file(WRITE "${ARG_DESTINATION}/${DST_FILE}" "${CONTENT}")
+                        else()
+                            file(WRITE "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}/${DST_FILE}" "${CONTENT}")
+                        endif()
+                    endif()
+                endforeach()
+            else()
+                if (IS_ABSOLUTE ${ARG_DESTINATION})
+                    file(COPY "${FILE}" DESTINATION "${ARG_DESTINATION}")
+                else()
+                    file(COPY "${FILE}" DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
+                endif()
             endif()
         endforeach()
-    else()
-        file(COPY "${ARG_SOURCE}" DESTINATION "${ARG_DESTINATION}")
-    endif()
+    endforeach()
 endfunction()
 
 function (SealLake_CopyDirectory)
