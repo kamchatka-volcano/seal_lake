@@ -369,7 +369,7 @@ endfunction()
 function(SealLake_Download)
     cmake_parse_arguments(
         ARG
-        ""
+        "AS_SUBPROJECT"
         "URL;GIT_REPOSITORY;GIT_TAG;DESTINATION"
         "FILES;DIRECTORIES;TEXT_REPLACEMENTS"
         ${ARGN}
@@ -394,9 +394,13 @@ function(SealLake_Download)
                 GIT_PROGRESS TRUE
         )
     endif()
-    FetchContent_GetProperties(${DOWNLOAD_TARGET})
-    if(NOT ${DOWNLOAD_TARGET}_POPULATED)
-        FetchContent_Populate(${DOWNLOAD_TARGET})
+    if (ARG_AS_SUBPROJECT)
+        FetchContent_MakeAvailable(${DOWNLOAD_TARGET})
+    else()
+        FetchContent_GetProperties(${DOWNLOAD_TARGET})
+        if(NOT ${DOWNLOAD_TARGET}_POPULATED)
+            FetchContent_Populate(${DOWNLOAD_TARGET})
+        endif()
     endif()
     foreach(FILE_MASK IN ITEMS ${ARG_FILES})
         file(GLOB SRC_FILES "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${FILE_MASK}")
