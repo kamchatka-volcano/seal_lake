@@ -11,17 +11,11 @@ function(SealLake_HeaderOnlyLibrary)
         ARG
         ""
         "NAMESPACE"
-        "PROPERTIES;COMPILE_FEATURES;DEPENDENCIES;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;PUBLIC_HEADERS;SOURCES;BUILD_STAGE_LIBRARIES"
+        "PROPERTIES;COMPILE_FEATURES;DEPENDENCIES;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;"
         ${ARGN}
     )
-    if (ARG_PUBLIC_HEADERS)
-        message(FATAL_ERROR "Header only libraries can't use PUBLIC_HEADERS argument")
-    endif()
-    if (ARG_SOURCES)
-        message(FATAL_ERROR "Header only libraries can't use SOURCES argument")
-    endif()
-    if (ARG_BUILD_STAGE_LIBRARIES)
-        message(FATAL_ERROR "Header only libraries can't use BUILD_STAGE_LIBRARIES argument")
+    if (ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     _SealLakeImpl_Library(INTERFACE INTERFACE "")
 endfunction()
@@ -34,6 +28,9 @@ function(SealLake_StaticLibrary)
         "PROPERTIES;COMPILE_FEATURES;DEPENDENCIES;SOURCES;PUBLIC_HEADERS;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;BUILD_STAGE_LIBRARIES;"
         ${ARGN}
     )
+    if (ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
     string(TOUPPER ${PROJECT_NAME} VARNAME)
     set(${${VARNAME}_OBJECT_LIB} "Build ${PROJECT_NAME} as object library" OFF PARENT_SCOPE)
 
@@ -42,7 +39,6 @@ function(SealLake_StaticLibrary)
     else()
         _SealLakeImpl_Library(STATIC PUBLIC ARCHIVE)
     endif()
-    message("TEST_SEAL_LAKE_LIB_TYPE2: ${SEAL_LAKE_LIB_TYPE}")
 endfunction()
 
 function(SealLake_SharedLibrary)
@@ -64,6 +60,9 @@ function(SealLake_Executable)
         "PROPERTIES;COMPILE_FEATURES;SOURCES;INCLUDES;LIBRARIES"
         ${ARGN}
     )
+    if (ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
     set(SEAL_LAKE_LIB_TYPE "")
     set(SEAL_LAKE_LIB_TYPE "" PARENT_SCOPE)
     set(SEAL_LAKE_DEFAULT_SCOPE PRIVATE PARENT_SCOPE)
@@ -95,6 +94,9 @@ function (SealLake_GoogleTest)
         "PROPERTIES;COMPILE_FEATURES;SOURCES;INCLUDES;LIBRARIES"
         ${ARGN}
     )
+    if (ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
     set(SEAL_LAKE_LIB_TYPE "")
     set(SEAL_LAKE_LIB_TYPE "" PARENT_SCOPE)
     set(SEAL_LAKE_DEFAULT_SCOPE PRIVATE PARENT_SCOPE)
@@ -129,7 +131,7 @@ endfunction()
 
 function (SealLake_CompileFeatures)
     foreach(FEATURE IN ITEMS ${ARGN})
-    target_compile_features(${PROJECT_NAME} ${SEAL_LAKE_DEFAULT_SCOPE} ${FEATURE})
+        target_compile_features(${PROJECT_NAME} ${SEAL_LAKE_DEFAULT_SCOPE} ${FEATURE})
     endforeach()
 endfunction()
 
@@ -217,6 +219,9 @@ function (SealLake_OptionalBuildSteps)
         "IF_ENABLED;IF_ENABLED_AND_STANDALONE;IF_ENABLED_OR_STANDALONE"
         ${ARGN}
     )
+    if (ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
     macro (_Impl SUB_PROJECTS MODE)
         SealLake_CheckStandalone(IS_STANDALONE)
         foreach (DIR IN ITEMS ${SUB_PROJECTS})
@@ -261,6 +266,9 @@ function (SealLake_Install)
             "FILES;DIRECTORIES"
             ${ARGN}
     )
+    if (ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
     if(ARG_DESTINATION)
         if (IS_ABSOLUTE ${ARG_DESTINATION})
             set(DESTINATION_PATH ${ARG_DESTINATION})
@@ -295,6 +303,9 @@ function(SealLake_InstallPackage)
         "DEPENDENCIES"
         ${ARGN}
     )
+    if (ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
     set(PACK_PATH "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
 
     install(TARGETS "${PROJECT_NAME}"
@@ -336,6 +347,10 @@ function (SealLake_Import NAME VERSION)
         ""
         ${ARGN}
     )
+    if (ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+
     find_package(${NAME} ${VERSION} QUIET)
     if (NOT ${${NAME}_FOUND})
         if (ARG_CMAKE_FILE)
@@ -374,6 +389,10 @@ function(SealLake_Download)
         "FILES;DIRECTORIES;TEXT_REPLACEMENTS"
         ${ARGN}
     )
+    if (ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+
     include(FetchContent)
     if (ARG_URL)
         SealLake_StringAfterLast(${ARG_URL} "/" URL_NAME)
@@ -529,6 +548,10 @@ function (_SealLakeImpl_FileCopy)
         "TEXT_REPLACEMENTS"
         ${ARGN}
     )
+    if (ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+
     list(LENGTH ARG_TEXT_REPLACEMENTS TEXT_REPLACEMENTS_LENGTH)
     MATH(EXPR REPLACEMENT_LAST_INDEX "${TEXT_REPLACEMENTS_LENGTH} - 2")
     if (TEXT_REPLACEMENTS_LENGTH GREATER 1)
@@ -556,6 +579,10 @@ function (_SealLakeImpl_DirectoryCopy)
         "TEXT_REPLACEMENTS"
         ${ARGN}
     )
+    if (ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+
     file(GLOB_RECURSE FILES "${ARG_SOURCE}/*")
     foreach(FILE IN ITEMS ${FILES})
         SealLake_StringBeforeLast(${ARG_SOURCE} / ARG_SOURCE_PARENT)
@@ -575,6 +602,9 @@ function (_SealLakeImpl_CreatePackageConfig)
         "DEPENDENCIES"
         ${ARGN}
     )
+    if (ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
 
     include(CMakePackageConfigHelpers)
     set(RESULT "@PACKAGE_INIT@
