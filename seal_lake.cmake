@@ -427,17 +427,71 @@ function(SealLake_Download)
     foreach(FILE_MASK IN ITEMS ${ARG_FILES})
         file(GLOB SRC_FILES "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${FILE_MASK}")
         foreach(SRC IN ITEMS ${SRC_FILES})
-            _SealLakeImpl_FileCopy(SOURCE "${SRC}"
+            SealLake_CopyFile(SOURCE "${SRC}"
                               DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}"
                               TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS})
         endforeach()
     endforeach()
     foreach(DIR IN ITEMS ${ARG_DIRECTORIES})
-        _SealLakeImpl_DirectoryCopy(
+        SealLake_CopyDirectory(
                 SOURCE "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR}"
                 DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}"
                 TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS}
         )
+    endforeach()
+endfunction()
+
+function (SealLake_CopyFile)
+     cmake_parse_arguments(
+        ARG
+        ""
+        "SOURCE;DESTINATION"
+        "TEXT_REPLACEMENTS"
+        ${ARGN}
+    )
+    if (ARG_UNPARSED_ARGUMENTS)
+        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+
+    list(LENGTH ARG_TEXT_REPLACEMENTS TEXT_REPLACEMENTS_LENGTH)
+    MATH(EXPR REPLACEMENT_LAST_INDEX "${TEXT_REPLACEMENTS_LENGTH} - 2")
+    if (TEXT_REPLACEMENTS_LENGTH GREATER 1)
+        file(READ "${ARG_SOURCE}" CONTENT)
+        foreach(REPLACEMENT_INDEX RANGE 0 ${REPLACEMENT_LAST_INDEX} 2)
+            list(GET ARG_TEXT_REPLACEMENTS ${REPLACEMENT_INDEX} FROM_STR)
+            MATH(EXPR REPLACEMENT_INDEX "${REPLACEMENT_INDEX}+1")
+            list(GET ARG_TEXT_REPLACEMENTS ${REPLACEMENT_INDEX} TO_STR)
+            if (FROM_STR)
+                string(REPLACE "${FROM_STR}" "${TO_STR}" CONTENT "${CONTENT}")
+                get_filename_component(DST_FILE "${ARG_SOURCE}" NAME)
+                file(WRITE "${ARG_DESTINATION}/${DST_FILE}" "${CONTENT}")
+            endif()
+        endforeach()
+    else()
+        file(COPY "${ARG_SOURCE}" DESTINATION "${ARG_DESTINATION}")
+    endif()
+endfunction()
+
+function (SealLake_CopyDirectory)
+     cmake_parse_arguments(
+        ARG
+        ""
+        "SOURCE;DESTINATION"
+        "TEXT_REPLACEMENTS"
+        ${ARGN}
+    )
+    if (ARG_UNPARSED_ARGUMENTS)
+        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+
+    file(GLOB_RECURSE FILES "${ARG_SOURCE}/*")
+    foreach(FILE IN ITEMS ${FILES})
+        SealLake_StringBeforeLast(${ARG_SOURCE} / ARG_SOURCE_PARENT)
+        SealLake_StringAfterFirst(${FILE} "${ARG_SOURCE_PARENT}" FILE_PATH)
+        SealLake_StringBeforeLast(${FILE_PATH} / FILE_DIR)
+        SealLake_CopyFile(SOURCE "${FILE}"
+                          DESTINATION "${ARG_DESTINATION}/${FILE_DIR}"
+                          TEXT_REPLACEMENTS "${ARG_TEXT_REPLACEMENTS}")
     endforeach()
 endfunction()
 
@@ -552,60 +606,6 @@ macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
         )
     endif()
 endmacro()
-
-function (_SealLakeImpl_FileCopy)
-     cmake_parse_arguments(
-        ARG
-        ""
-        "SOURCE;DESTINATION"
-        "TEXT_REPLACEMENTS"
-        ${ARGN}
-    )
-    if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
-
-    list(LENGTH ARG_TEXT_REPLACEMENTS TEXT_REPLACEMENTS_LENGTH)
-    MATH(EXPR REPLACEMENT_LAST_INDEX "${TEXT_REPLACEMENTS_LENGTH} - 2")
-    if (TEXT_REPLACEMENTS_LENGTH GREATER 1)
-        file(READ "${ARG_SOURCE}" CONTENT)
-        foreach(REPLACEMENT_INDEX RANGE 0 ${REPLACEMENT_LAST_INDEX} 2)
-            list(GET ARG_TEXT_REPLACEMENTS ${REPLACEMENT_INDEX} FROM_STR)
-            MATH(EXPR REPLACEMENT_INDEX "${REPLACEMENT_INDEX}+1")
-            list(GET ARG_TEXT_REPLACEMENTS ${REPLACEMENT_INDEX} TO_STR)
-            if (FROM_STR)
-                string(REPLACE "${FROM_STR}" "${TO_STR}" CONTENT "${CONTENT}")
-                get_filename_component(DST_FILE "${ARG_SOURCE}" NAME)
-                file(WRITE "${ARG_DESTINATION}/${DST_FILE}" "${CONTENT}")
-            endif()
-        endforeach()
-    else()
-        file(COPY "${ARG_SOURCE}" DESTINATION "${ARG_DESTINATION}")
-    endif()
-endfunction()
-
-function (_SealLakeImpl_DirectoryCopy)
-     cmake_parse_arguments(
-        ARG
-        ""
-        "SOURCE;DESTINATION"
-        "TEXT_REPLACEMENTS"
-        ${ARGN}
-    )
-    if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
-
-    file(GLOB_RECURSE FILES "${ARG_SOURCE}/*")
-    foreach(FILE IN ITEMS ${FILES})
-        SealLake_StringBeforeLast(${ARG_SOURCE} / ARG_SOURCE_PARENT)
-        SealLake_StringAfterFirst(${FILE} "${ARG_SOURCE_PARENT}" FILE_PATH)
-        SealLake_StringBeforeLast(${FILE_PATH} / FILE_DIR)
-        _SealLakeImpl_FileCopy(SOURCE "${FILE}"
-                          DESTINATION "${ARG_DESTINATION}/${FILE_DIR}"
-                          TEXT_REPLACEMENTS "${ARG_TEXT_REPLACEMENTS}")
-    endforeach()
-endfunction()
 
 function (_SealLakeImpl_CreatePackageConfig)
     cmake_parse_arguments(
