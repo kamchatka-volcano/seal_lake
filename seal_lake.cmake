@@ -221,9 +221,6 @@ function (SealLake_OptionalBuildSteps)
         "IF_ENABLED;IF_ENABLED_AND_STANDALONE;IF_ENABLED_OR_STANDALONE"
         ${ARGN}
     )
-    if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
     macro (_Impl SUB_PROJECTS MODE)
         SealLake_CheckStandalone(IS_STANDALONE)
         foreach (DIR IN ITEMS ${SUB_PROJECTS})
