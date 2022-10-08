@@ -395,26 +395,26 @@ function(SealLake_Download)
         )
     endif()
     FetchContent_GetProperties(${DOWNLOAD_TARGET})
-    if(NOT "${DOWNLOAD_TARGET}_POPULATED")
+    if(NOT ${DOWNLOAD_TARGET}_POPULATED)
         FetchContent_Populate(${DOWNLOAD_TARGET})
-        foreach(FILE_MASK IN ITEMS ${ARG_FILES})
-            file(GLOB SRC_FILES "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${FILE_MASK}")
-            foreach(SRC IN ITEMS ${SRC_FILES})
-                message("Copy file: ${SRC} to ${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
-                _SealLakeImpl_FileCopy(SOURCE "${SRC}"
-                                  DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}"
-                                  TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS})
-            endforeach()
-        endforeach()
-        foreach(DIR IN ITEMS ${ARG_DIRECTORIES})
-            message("Copy directory ${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR} to ${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
-            _SealLakeImpl_DirectoryCopy(
-                    SOURCE "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR}"
-                    DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}"
-                    TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS}
-            )
-        endforeach()
     endif()
+    foreach(FILE_MASK IN ITEMS ${ARG_FILES})
+        file(GLOB SRC_FILES "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${FILE_MASK}")
+        foreach(SRC IN ITEMS ${SRC_FILES})
+            message("Copy file: ${SRC} to ${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
+            _SealLakeImpl_FileCopy(SOURCE "${SRC}"
+                              DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}"
+                              TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS})
+        endforeach()
+    endforeach()
+    foreach(DIR IN ITEMS ${ARG_DIRECTORIES})
+        message("Copy directory ${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR} to ${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
+        _SealLakeImpl_DirectoryCopy(
+                SOURCE "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR}"
+                DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}"
+                TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS}
+        )
+    endforeach()
 endfunction()
 
 function (SealLake_StringBeforeLast STR VALUE RESULT)
