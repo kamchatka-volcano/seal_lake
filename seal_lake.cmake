@@ -212,7 +212,7 @@ function (SealLake_BuildStageLibraries)
 
     foreach (LIB IN ITEMS ${ARGN})
         SealLake_Info("Link library ${LIB}")
-        if (SEAL_LAKE_LIB_TYPE STREQUAL STATIC)
+        if (SEAL_LAKE_LIB_TYPE STREQUAL STATIC OR SEAL_LAKE_LIB_TYPE STREQUAL OBJECT)
             target_link_libraries(${PROJECT_NAME} PRIVATE "$<BUILD_INTERFACE:${LIB}>")
         else()
             target_link_libraries(${PROJECT_NAME} PRIVATE ${LIB})
