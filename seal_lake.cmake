@@ -20,6 +20,20 @@ function(SealLake_HeaderOnlyLibrary)
     _SealLakeImpl_Library(INTERFACE INTERFACE "")
 endfunction()
 
+function(SealLake_ObjectLibrary)
+    cmake_parse_arguments(
+        ARG
+        ""
+        "NAMESPACE"
+        "PROPERTIES;COMPILE_FEATURES;DEPENDENCIES;SOURCES;PUBLIC_HEADERS;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;BUILD_STAGE_LIBRARIES;"
+        ${ARGN}
+    )
+    if (ARG_UNPARSED_ARGUMENTS)
+        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+    _SealLakeImpl_Library(OBJECT PUBLIC ARCHIVE)
+endfunction()
+
 function(SealLake_StaticLibrary)
     cmake_parse_arguments(
         ARG
@@ -455,7 +469,6 @@ function (SealLake_CopyFile)
 
     foreach(FILE_MASK IN ITEMS ${ARG_SOURCE})
         file(GLOB_RECURSE FILES "${FILE_MASK}")
-        message("FILES: ${FILES}")
         foreach(FILE IN ITEMS ${FILES})
             list(LENGTH ARG_TEXT_REPLACEMENTS TEXT_REPLACEMENTS_LENGTH)
             MATH(EXPR REPLACEMENT_LAST_INDEX "${TEXT_REPLACEMENTS_LENGTH} - 2")
