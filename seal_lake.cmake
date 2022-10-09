@@ -355,24 +355,25 @@ function(SealLake_InstallPackage)
 endfunction()
 
 function (SealLake_Import NAME VERSION)
-    cmake_parse_arguments(
+cmake_parse_arguments(
         ARG
         ""
         "CMAKE_FILE;URL;GIT_REPOSITORY;GIT_TAG"
-        ""
+        "TEXT_REPLACEMENTS"
         ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
         SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
 
-    find_package(${NAME} ${VERSION} QUIET)
+find_package(${NAME} ${VERSION} QUIET)
     if (NOT ${${NAME}_FOUND})
         if (ARG_CMAKE_FILE)
             SealLake_Info("${NAME} wasn't found on your system, proceeding to use instructions from config ${ARG_CMAKE_FILE}.")
             include("${ARG_CMAKE_FILE}")
             return()
         endif()
+
         SealLake_Info("${NAME} wasn't found on your system, proceeding to downloading it.")
         Set(FETCHCONTENT_QUIET FALSE)
         if (ARG_URL)
@@ -390,9 +391,20 @@ function (SealLake_Import NAME VERSION)
             )
         endif()
         FetchContent_MakeAvailable(${NAME})
-        set(${NAME}_POPULATED "${${NAME}_POPULATED}" PARENT_SCOPE)
-        set(${NAME}_SOURCE_DIR "${${NAME}_SOURCE_DIR}" PARENT_SCOPE)
-        set(${NAME}_BINARY_DIR "${${NAME}_BINARY_DIR}" PARENT_SCOPE)
+
+        string(TOLOWER ${NAME} VARNAME)
+        if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${VARNAME}_text_replaced")
+            SealLake_ReplaceText(
+                    DIRECTORIES "${${VARNAME}_SOURCE_DIR}"
+                    TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS}
+
+            )
+            file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${VARNAME}_text_replaced" 1)
+        endif()
+
+        set(${VARNAME}_POPULATED "${${VARNAME}_POPULATED}" PARENT_SCOPE)
+        set(${VARNAME}_SOURCE_DIR "${${VARNAME}_SOURCE_DIR}" PARENT_SCOPE)
+        set(${VARNAME}_BINARY_DIR "${${VARNAME}_BINARY_DIR}" PARENT_SCOPE)
     endif()
 endfunction()
 
@@ -401,7 +413,7 @@ function(SealLake_Download)
         ARG
         "AS_SUBPROJECT"
         "URL;GIT_REPOSITORY;GIT_TAG;DESTINATION"
-        "FILES;DIRECTORIES;TEXT_REPLACEMENTS"
+        "FILES;DIRECTORIES;WILDCARDS;TEXT_REPLACEMENTS"
         ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
@@ -438,87 +450,110 @@ function(SealLake_Download)
             FetchContent_Populate(${DOWNLOAD_TARGET})
         endif()
     endif()
-    foreach(FILE_MASK IN ITEMS ${ARG_FILES})
-        file(GLOB SRC_FILES "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${FILE_MASK}")
-        foreach(SRC IN ITEMS ${SRC_FILES})
-            SealLake_CopyFile(SOURCE "${SRC}"
-                              DESTINATION "${ARG_DESTINATION}"
-                              TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS})
-        endforeach()
-    endforeach()
-    foreach(DIR IN ITEMS ${ARG_DIRECTORIES})
-        SealLake_CopyDirectory(
-                SOURCE "${${DOWNLOAD_TARGET}_SOURCE_DIR}/${DIR}"
-                DESTINATION "${ARG_DESTINATION}"
+
+    SealLake_Copy(
+            FILES ${ARG_FILES}
+            DIRECTORIES ${ARG_DIRECTORIES}
+            WILDCARDS ${ARG_WILDCARDS}
+            DESTINATION "${ARG_DESTINATION}"
+    )
+
+    foreach(FILE IN ITEMS ${ARG_FILES})
+        get_filename_component(FILE_NAME "${FILE}" NAME)
+        SealLake_ReplaceText(
+                FILES "${ARG_DESTINATION}/${FILENAME}"
                 TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS}
         )
     endforeach()
-endfunction()
+    foreach(DIR IN ITEMS ${ARG_DIRECTORIES})
+        SealLake_StringAfterLast("${DIR}" / DIRNAME)
+        SealLake_ReplaceText(
+                DIRECTORIES "${ARG_DESTINATION}/${DIRNAME}"
+                TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS}
+        )
+    endforeach()
 
-function (SealLake_CopyFile)
-     cmake_parse_arguments(
-        ARG
-        ""
-        "DESTINATION"
-        "SOURCE;TEXT_REPLACEMENTS"
-        ${ARGN}
-    )
-    if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
-    endif()
-
-    foreach(FILE_MASK IN ITEMS ${ARG_SOURCE})
-        file(GLOB_RECURSE FILES "${FILE_MASK}")
+    foreach(WILDCARD IN ITEMS ${ARG_WILDCARDS})
+        file(GLOB FILES "${WILDCARD}")
         foreach(FILE IN ITEMS ${FILES})
-            list(LENGTH ARG_TEXT_REPLACEMENTS TEXT_REPLACEMENTS_LENGTH)
-            MATH(EXPR REPLACEMENT_LAST_INDEX "${TEXT_REPLACEMENTS_LENGTH} - 2")
-            if (TEXT_REPLACEMENTS_LENGTH GREATER 1)
-                file(READ "${FILE}" CONTENT)
-                foreach(REPLACEMENT_INDEX RANGE 0 ${REPLACEMENT_LAST_INDEX} 2)
-                    list(GET ARG_TEXT_REPLACEMENTS ${REPLACEMENT_INDEX} FROM_STR)
-                    MATH(EXPR REPLACEMENT_INDEX "${REPLACEMENT_INDEX}+1")
-                    list(GET ARG_TEXT_REPLACEMENTS ${REPLACEMENT_INDEX} TO_STR)
-                    if (FROM_STR)
-                        string(REPLACE "${FROM_STR}" "${TO_STR}" CONTENT "${CONTENT}")
-                        get_filename_component(DST_FILE "${FILE}" NAME)
-                        if (IS_ABSOLUTE ${ARG_DESTINATION})
-                            file(WRITE "${ARG_DESTINATION}/${DST_FILE}" "${CONTENT}")
-                        else()
-                            file(WRITE "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}/${DST_FILE}" "${CONTENT}")
-                        endif()
-                    endif()
-                endforeach()
-            else()
-                if (IS_ABSOLUTE ${ARG_DESTINATION})
-                    file(COPY "${FILE}" DESTINATION "${ARG_DESTINATION}")
-                else()
-                    file(COPY "${FILE}" DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
-                endif()
-            endif()
+            get_filename_component(FILE_NAME "${FILE}" NAME)
+            SealLake_ReplaceText(
+                    FILES "${ARG_DESTINATION}/${FILENAME}"
+                    TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS}
+            )
         endforeach()
     endforeach()
 endfunction()
 
-function (SealLake_CopyDirectory)
-     cmake_parse_arguments(
+function(SealLake_Copy)
+    cmake_parse_arguments(
         ARG
         ""
-        "SOURCE;DESTINATION"
-        "TEXT_REPLACEMENTS"
+        "DESTINATION"
+        "FILES;DIRECTORIES;WILDCARDS"
         ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
         SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
 
-    file(GLOB_RECURSE FILES "${ARG_SOURCE}/*")
-    foreach(FILE IN ITEMS ${FILES})
-        SealLake_StringBeforeLast(${ARG_SOURCE} / ARG_SOURCE_PARENT)
-        SealLake_StringAfterFirst(${FILE} "${ARG_SOURCE_PARENT}" FILE_PATH)
-        SealLake_StringBeforeLast(${FILE_PATH} / FILE_DIR)
-        SealLake_CopyFile(SOURCE "${FILE}"
-                          DESTINATION "${ARG_DESTINATION}/${FILE_DIR}"
-                          TEXT_REPLACEMENTS "${ARG_TEXT_REPLACEMENTS}")
+    foreach(FILE IN ITEMS ${ARG_FILES})
+        get_filename_component(FILE_NAME "${FILE}" NAME)
+        if (IS_ABSOLUTE ${ARG_DESTINATION})
+            file(COPY "${FILE}" DESTINATION "${ARG_DESTINATION}")
+        else()
+            file(COPY "${FILE}" DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
+        endif()
+    endforeach()
+
+    foreach(DIR IN ITEMS ${ARG_DIRECTORIES})
+        file(GLOB_RECURSE FILES "${DIR}/*")
+        foreach(FILE IN ITEMS ${FILES})
+            SealLake_StringBeforeLast(${DIR} / DIR_PARENT)
+            SealLake_StringAfterFirst(${FILE} "${DIR_PARENT}" FILE_PATH)
+            SealLake_StringBeforeLast(${FILE_PATH} / FILE_DIR)
+            get_filename_component(FILE_NAME "${FILE}" NAME)
+            file(COPY "${FILE}" DESTINATION "${ARG_DESTINATION}/${FILE_DIR}")
+        endforeach()
+    endforeach()
+
+    foreach(WILDCARD IN ITEMS ${ARG_WILDCARDS})
+        file(GLOB FILES "${WILDCARD}")
+        file(COPY ${FILES} DESTINATION ${ARG_DESTINATION})
+    endforeach()
+endfunction()
+
+function(SealLake_ReplaceText)
+     cmake_parse_arguments(
+        ARG
+        ""
+        ""
+        "FILES;DIRECTORIES;WILDCARDS;TEXT_REPLACEMENTS"
+        ${ARGN}
+    )
+    if (ARG_UNPARSED_ARGUMENTS)
+        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+    if (NOT ARG_TEXT_REPLACEMENTS)
+         return()
+     endif()
+
+    foreach (FILE IN ITEMS ${ARG_FILES})
+         _SealLakeImpl_ReplaceText("${FILE}" ${ARG_TEXT_REPLACEMENTS})
+    endforeach()
+
+    foreach(DIR IN ITEMS ${ARG_DIRECTORIES})
+        file(GLOB_RECURSE FILES "${DIR}/*")
+        foreach(FILE IN ITEMS ${FILES})
+            _SealLakeImpl_ReplaceText("${FILE}" ${ARG_TEXT_REPLACEMENTS})
+        endforeach()
+    endforeach()
+
+    foreach(WILDCARD IN ITEMS ${ARG_WILDCARDS})
+        file(GLOB FILES "${WILDCARD}")
+        foreach(FILE IN ITEMS ${FILES})
+            _SealLakeImpl_ReplaceText("${FILE}" ${ARG_TEXT_REPLACEMENTS})
+        endforeach()
     endforeach()
 endfunction()
 
@@ -677,6 +712,27 @@ function (_SealLakeImpl_CreatePackageConfig)
             "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
             INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
     )
+endfunction()
+
+function(_SealLakeImpl_ReplaceText FILE)
+    string(FIND "${FILE}" ".git" IS_GIT_FILE)
+    if (NOT "${IS_GIT_FILE}" EQUAL -1)
+        return()
+    endif()
+    list(LENGTH ARGN TEXT_REPLACEMENTS_LENGTH)
+    MATH(EXPR REPLACEMENT_LAST_INDEX "${TEXT_REPLACEMENTS_LENGTH} - 2")
+    if (TEXT_REPLACEMENTS_LENGTH GREATER 1)
+        file(READ "${FILE}" CONTENT)
+        foreach(REPLACEMENT_INDEX RANGE 0 ${REPLACEMENT_LAST_INDEX} 2)
+            list(GET ARGN ${REPLACEMENT_INDEX} FROM_STR)
+            MATH(EXPR REPLACEMENT_INDEX "${REPLACEMENT_INDEX}+1")
+            list(GET ARGN ${REPLACEMENT_INDEX} TO_STR)
+            if (FROM_STR)
+                string(REPLACE "${FROM_STR}" "${TO_STR}" CONTENT "${CONTENT}")
+                file(WRITE "${FILE}" "${CONTENT}")
+            endif()
+        endforeach()
+    endif()
 endfunction()
 
 function(_SealLakeImpl_StringBefore STR VALUE RESULT REVERSE)
