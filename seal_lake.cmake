@@ -743,7 +743,7 @@ function (_SealLakeImpl_CreatePackageConfig)
 endfunction()
 
 function(_SealLakeImpl_ReplaceText FILE)
-    string(FIND "${FILE}" ".git" IS_GIT_FILE)
+    string(FIND "${FILE}" ".git/" IS_GIT_FILE)
     if (NOT "${IS_GIT_FILE}" EQUAL -1)
         return()
     endif()
