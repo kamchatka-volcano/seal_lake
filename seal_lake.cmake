@@ -424,7 +424,8 @@ function(SealLake_Download)
     if (ARG_URL)
         SealLake_StringAfterLast(${ARG_URL} "/" URL_NAME)
         SealLake_Info("Download ${URL_NAME}")
-        string(TOLOWER ${URL_NAME} DOWNLOAD_TARGET)
+        string(TOLOWER ${URL_NAME} URL_NAME)
+        set(DOWNLOAD_TARGET "${PROJECT_NAME}_${URL_NAME}")
         FetchContent_Declare(
                 ${DOWNLOAD_TARGET}
                 URL ${ARG_URL}
@@ -433,7 +434,7 @@ function(SealLake_Download)
         SealLake_StringAfterLast(${ARG_GIT_REPOSITORY} "/" GIT_REPOSITORY_NAME)
         SealLake_Info("Download ${GIT_REPOSITORY_NAME}")
         string(TOLOWER ${GIT_REPOSITORY_NAME} GIT_REPOSITORY_NAME)
-        set(DOWNLOAD_TARGET "${GIT_REPOSITORY_NAME}_${ARG_GIT_TAG}")
+        set(DOWNLOAD_TARGET "${PROJECT_NAME}_${GIT_REPOSITORY_NAME}_${ARG_GIT_TAG}")
         FetchContent_Declare(
                 ${DOWNLOAD_TARGET}
                 GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
