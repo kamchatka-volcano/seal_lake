@@ -432,7 +432,7 @@ function(SealLake_Bundle)
         SealLake_StringAfterLast(${ARG_URL} "/" URL_NAME)
         SealLake_Info("Download ${URL_NAME}")
         string(TOLOWER ${URL_NAME} URL_NAME)
-        set(DOWNLOAD_TARGET "${SEAL_LAKE_TARGET}_${URL_NAME}")
+        set(DOWNLOAD_TARGET "${URL_NAME}")
         FetchContent_Declare(
                 ${DOWNLOAD_TARGET}
                 URL ${ARG_URL}
@@ -441,7 +441,7 @@ function(SealLake_Bundle)
         SealLake_StringAfterLast(${ARG_GIT_REPOSITORY} "/" GIT_REPOSITORY_NAME)
         SealLake_Info("Download ${GIT_REPOSITORY_NAME}")
         string(TOLOWER ${GIT_REPOSITORY_NAME} GIT_REPOSITORY_NAME)
-        set(DOWNLOAD_TARGET "${SEAL_LAKE_TARGET}_${GIT_REPOSITORY_NAME}_${ARG_GIT_TAG}")
+        set(DOWNLOAD_TARGET "${GIT_REPOSITORY_NAME}_${ARG_GIT_TAG}")
         FetchContent_Declare(
                 ${DOWNLOAD_TARGET}
                 GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
