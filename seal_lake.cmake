@@ -359,7 +359,7 @@ cmake_parse_arguments(
         ARG
         ""
         "CMAKE_FILE;URL;GIT_REPOSITORY;GIT_TAG"
-        "TEXT_REPLACEMENTS"
+        ""
         ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
@@ -391,28 +391,17 @@ find_package(${NAME} ${VERSION} QUIET)
             )
         endif()
         FetchContent_MakeAvailable(${NAME})
-
-        string(TOLOWER ${NAME} VARNAME)
-        if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${VARNAME}_text_replaced")
-            SealLake_ReplaceText(
-                    DIRECTORIES "${${VARNAME}_SOURCE_DIR}"
-                    TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS}
-
-            )
-            file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${VARNAME}_text_replaced" 1)
-        endif()
-
         set(${VARNAME}_POPULATED "${${VARNAME}_POPULATED}" PARENT_SCOPE)
         set(${VARNAME}_SOURCE_DIR "${${VARNAME}_SOURCE_DIR}" PARENT_SCOPE)
         set(${VARNAME}_BINARY_DIR "${${VARNAME}_BINARY_DIR}" PARENT_SCOPE)
     endif()
 endfunction()
 
-function(SealLake_Download)
+function(SealLake_Bundle)
     cmake_parse_arguments(
         ARG
-        "IMPORT"
-        "URL;GIT_REPOSITORY;GIT_TAG;DESTINATION"
+        ""
+        "IMPORT;URL;GIT_REPOSITORY;GIT_TAG;DESTINATION"
         "FILES;DIRECTORIES;WILDCARDS;TEXT_REPLACEMENTS"
         ${ARGN}
     )
@@ -443,13 +432,28 @@ function(SealLake_Download)
                 GIT_PROGRESS TRUE
         )
     endif()
+    FetchContent_GetProperties(${DOWNLOAD_TARGET})
+    if(NOT ${DOWNLOAD_TARGET}_POPULATED)
+        FetchContent_Populate(${DOWNLOAD_TARGET})
+    endif()
+
     if (ARG_IMPORT)
-        FetchContent_MakeAvailable(${DOWNLOAD_TARGET})
-    else()
-        FetchContent_GetProperties(${DOWNLOAD_TARGET})
-        if(NOT ${DOWNLOAD_TARGET}_POPULATED)
-            FetchContent_Populate(${DOWNLOAD_TARGET})
-        endif()
+        SealLake_Copy(
+            SOURCE_BASE_PATH ${${DOWNLOAD_TARGET}_SOURCE_DIR}
+            FILES ${ARG_FILES}
+            DIRECTORIES .
+            WILDCARDS
+            DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${ARG_IMPORT}"
+        )
+        add_subdirectory("${CMAKE_CURRENT_BINARY_DIR}/${ARG_IMPORT}")
+
+        file(GLOB_RECURSE FILES "${CMAKE_CURRENT_BINARY_DIR}/${ARG_IMPORT}/*")
+        foreach(FILE IN ITEMS ${FILES})
+            SealLake_ReplaceText(
+                    FILES "${FILE}"
+                    TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS}
+            )
+        endforeach()
     endif()
 
     if (NOT IS_ABSOLUTE "${ARG_DESTINATION}")
