@@ -465,7 +465,7 @@ function(SealLake_Bundle)
         )
         set(CURRENT_TARGET ${SEAL_LAKE_TARGET})
         set(SEAL_LAKE_TARGET ${ARG_IMPORT})
-        add_subdirectory("${CMAKE_CURRENT_BINARY_DIR}/${ARG_IMPORT}")
+        add_subdirectory("${CMAKE_CURRENT_BINARY_DIR}/${ARG_IMPORT}" "${CMAKE_CURRENT_BINARY_DIR}/${ARG_IMPORT}-build")
         set(SEAL_LAKE_TARGET ${CURRENT_TARGET})
 
         file(GLOB_RECURSE FILES "${CMAKE_CURRENT_BINARY_DIR}/${ARG_IMPORT}/*")
