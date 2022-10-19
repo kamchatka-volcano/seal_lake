@@ -415,7 +415,7 @@ function(SealLake_Bundle)
     cmake_parse_arguments(
         ARG
         ""
-        "IMPORT;URL;GIT_REPOSITORY;GIT_TAG;DESTINATION"
+        "NAME;URL;GIT_REPOSITORY;GIT_TAG;DESTINATION"
         "FILES;DIRECTORIES;WILDCARDS;TEXT_REPLACEMENTS"
         ${ARGN}
     )
@@ -423,93 +423,25 @@ function(SealLake_Bundle)
         SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
 
-    include(FetchContent)
-    if (ARG_URL)
-        SealLake_StringAfterLast(${ARG_URL} "/" URL_NAME)
-        SealLake_Info("Download ${URL_NAME}")
-        string(TOLOWER ${URL_NAME} URL_NAME)
-        set(DOWNLOAD_TARGET "${URL_NAME}")
-        FetchContent_Declare(
-                ${DOWNLOAD_TARGET}
-                URL ${ARG_URL}
-        )
-    else()
-        SealLake_StringAfterLast(${ARG_GIT_REPOSITORY} "/" GIT_REPOSITORY_NAME)
-        SealLake_Info("Download ${GIT_REPOSITORY_NAME}")
-        string(TOLOWER ${GIT_REPOSITORY_NAME} GIT_REPOSITORY_NAME)
-        set(DOWNLOAD_TARGET "${GIT_REPOSITORY_NAME}_${ARG_GIT_TAG}")
-        FetchContent_Declare(
-                ${DOWNLOAD_TARGET}
-                GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
-                GIT_TAG        ${ARG_GIT_TAG}
-                GIT_SHALLOW    ON
-                GIT_PROGRESS TRUE
-        )
-    endif()
-    FetchContent_GetProperties(${DOWNLOAD_TARGET})
-    if(NOT ${DOWNLOAD_TARGET}_POPULATED)
-        FetchContent_Populate(${DOWNLOAD_TARGET})
-    endif()
-
-    if (ARG_IMPORT)
-        SealLake_Copy(
-            SOURCE_PATH ${${DOWNLOAD_TARGET}_SOURCE_DIR}
-            FILES ${ARG_FILES}
-            DIRECTORIES .
-            WILDCARDS
-            DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${ARG_IMPORT}"
-        )
-        set(CURRENT_TARGET ${SEAL_LAKE_TARGET})
-        set(SEAL_LAKE_TARGET ${ARG_IMPORT})
-        add_subdirectory("${CMAKE_CURRENT_BINARY_DIR}/${ARG_IMPORT}" "${CMAKE_CURRENT_BINARY_DIR}/${ARG_IMPORT}-build")
-        set(SEAL_LAKE_TARGET ${CURRENT_TARGET})
-
-        file(GLOB_RECURSE FILES "${CMAKE_CURRENT_BINARY_DIR}/${ARG_IMPORT}/*")
-        foreach(FILE IN ITEMS ${FILES})
-            SealLake_ReplaceText(
-                    FILES "${FILE}"
-                    TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS}
-            )
-        endforeach()
-    endif()
-
-    if (NOT IS_ABSOLUTE "${ARG_DESTINATION}")
-        set(ARG_DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
-    endif()
-
-    SealLake_Copy(
-            SOURCE_PATH ${${DOWNLOAD_TARGET}_SOURCE_DIR}
-            FILES ${ARG_FILES}
-            DIRECTORIES ${ARG_DIRECTORIES}
-            WILDCARDS ${ARG_WILDCARDS}
-            DESTINATION "${ARG_DESTINATION}"
+    SealLake_DownloadSource(
+        NAME           "${ARG_NAME}"
+        GIT_REPOSITORY "${ARG_GIT_REPOSITORY}"
+        GIT_TAG        "${ARG_GIT_TAG}"
+        URL            "${ARG_URL}"
     )
-
-    foreach(FILE IN ITEMS ${ARG_FILES})
-        get_filename_component(FILENAME "${FILE}" NAME)
-        SealLake_ReplaceText(
-                FILES "${ARG_DESTINATION}/${FILENAME}"
-                TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS}
-        )
-    endforeach()
-    foreach(DIR IN ITEMS ${ARG_DIRECTORIES})
-        SealLake_StringAfterLast("${DIR}" / DIRNAME)
-        SealLake_ReplaceText(
-                DIRECTORIES "${ARG_DESTINATION}/${DIRNAME}"
-                TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS}
-        )
-    endforeach()
-
-    foreach(WILDCARD IN ITEMS ${ARG_WILDCARDS})
-        file(GLOB FILES "${WILDCARD}")
-        foreach(FILE IN ITEMS ${FILES})
-            get_filename_component(FILENAME "${FILE}" NAME)
-            SealLake_ReplaceText(
-                    FILES "${ARG_DESTINATION}/${FILENAME}"
-                    TEXT_REPLACEMENTS ${ARG_TEXT_REPLACEMENTS}
-            )
-        endforeach()
-    endforeach()
+    SealLake_ReplaceText(
+        SOURCE             "${ARG_NAME}"
+        DIRECTORIES        "."
+        TEXT_REPLACEMENTS  ${ARG_TEXT_REPLACEMENTS}
+    )
+    SealLake_Copy(
+        SOURCE      "${ARG_NAME}"
+        FILES        ${ARG_FILES}
+        DIRECTORIES  ${ARG_DIRECTORIES}
+        WILDCARDS    ${ARG_WILDCARDS}
+        DESTINATION "${ARG_DESTINATION}"
+    )
+    SealLake_Load("${ARG_NAME}" TARGET_NAME "${ARG_NAME}")
 endfunction()
 
 function(SealLake_Copy)
