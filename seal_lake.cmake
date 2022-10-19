@@ -244,6 +244,14 @@ function (SealLake_OptionalBuildSteps)
         "IF_ENABLED;IF_ENABLED_AND_STANDALONE;IF_ENABLED_OR_STANDALONE"
         ${ARGN}
     )
+    macro(AddDirectory)
+        SealLake_Info("Add build step ${DIR}")
+        set(CURRENT_TARGET ${SEAL_LAKE_TARGET})
+        set(SEAL_LAKE_TARGET "")
+        add_subdirectory(${DIR})
+        set(SEAL_LAKE_TARGET "${CURRENT_TARGET}")
+        set(SEAL_LAKE_TARGET "${CURRENT_TARGET}" PARENT_SCOPE)
+    endmacro()
     macro (_Impl SUB_PROJECTS MODE)
         SealLake_CheckStandalone(IS_STANDALONE)
         foreach (DIR IN ITEMS ${SUB_PROJECTS})
@@ -252,27 +260,15 @@ function (SealLake_OptionalBuildSteps)
             set(ENABLE_${VAR_DIRNAME} "Enable ${DIRNAME}" OFF PARENT_SCOPE)
             if (${MODE} STREQUAL IF_ENABLED)
                 if (ENABLE_${VAR_DIRNAME})
-                    SealLake_Info("Add build step ${DIR}")
-                    set(CURRENT_TARGET ${SEAL_LAKE_TARGET})
-                    set(SEAL_LAKE_TARGET "")
-                    add_subdirectory(${DIR})
-                    set(SEAL_LAKE_TARGET "${CURRENT_TARGET}")
+                    AddDirectory()
                 endif()
             elseif(${MODE} STREQUAL IF_ENABLED_AND_STANDALONE)
                 if (ENABLE_${VAR_DIRNAME} AND IS_STANDALONE)
-                    SealLake_Info("Add build step ${DIR}")
-                    set(CURRENT_TARGET ${SEAL_LAKE_TARGET})
-                    set(SEAL_LAKE_TARGET "")
-                    add_subdirectory(${DIR})
-                    set(SEAL_LAKE_TARGET "${CURRENT_TARGET}")
+                    AddDirectory()
                 endif()
             elseif(${MODE} STREQUAL IF_ENABLED_OR_STANDALONE)
                 if (ENABLE_${VAR_DIRNAME} OR IS_STANDALONE)
-                   SealLake_Info("Add build step ${DIR}")
-                    set(CURRENT_TARGET ${SEAL_LAKE_TARGET})
-                    set(SEAL_LAKE_TARGET "")
-                    add_subdirectory(${DIR})
-                    set(SEAL_LAKE_TARGET "${CURRENT_TARGET}")
+                    AddDirectory()
                 endif()
             endif()
         endforeach()
@@ -457,7 +453,7 @@ function(SealLake_Bundle)
 
     if (ARG_IMPORT)
         SealLake_Copy(
-            SOURCE_BASE_PATH ${${DOWNLOAD_TARGET}_SOURCE_DIR}
+            SOURCE_PATH ${${DOWNLOAD_TARGET}_SOURCE_DIR}
             FILES ${ARG_FILES}
             DIRECTORIES .
             WILDCARDS
@@ -482,7 +478,7 @@ function(SealLake_Bundle)
     endif()
 
     SealLake_Copy(
-            SOURCE_BASE_PATH ${${DOWNLOAD_TARGET}_SOURCE_DIR}
+            SOURCE_PATH ${${DOWNLOAD_TARGET}_SOURCE_DIR}
             FILES ${ARG_FILES}
             DIRECTORIES ${ARG_DIRECTORIES}
             WILDCARDS ${ARG_WILDCARDS}
@@ -520,16 +516,25 @@ function(SealLake_Copy)
     cmake_parse_arguments(
         ARG
         ""
-        "SOURCE_BASE_PATH;DESTINATION"
+        "SOURCE;SOURCE_PATH;DESTINATION"
         "FILES;DIRECTORIES;WILDCARDS"
         ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
         SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
+    if (ARG_SOURCE AND ARG_SOURCE_PATH)
+        SealLake_Error("ARG_SOURCE and ARG_SOURCE_PATH arguments can't be specified simultaneously")
+    endif()
+    if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${ARG_SOURCE}")
+        SealLake_Error("Project source '${ARG_SOURCE}' doesn't exist, use DownloadSource() function to create a project source.")
+    endif()
 
-    if (NOT IS_ABSOLUTE "${ARG_SOURCE_BASE_PATH}")
-        set(ARG_SOURCE_BASE_PATH "${PROJECT_SOURCE_DIR}/${ARG_SOURCE_BASE_PATH}")
+    if (ARG_SOURCE)
+        set(ARG_SOURCE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${ARG_SOURCE}")
+    endif()
+    if (NOT IS_ABSOLUTE "${ARG_SOURCE_PATH}")
+        set(ARG_SOURCE_PATH "${PROJECT_SOURCE_DIR}/${ARG_SOURCE_PATH}")
     endif()
     if (NOT IS_ABSOLUTE "${ARG_DESTINATION}")
         set(ARG_DESTINATION "${PROJECT_SOURCE_DIR}/${ARG_DESTINATION}")
@@ -537,7 +542,7 @@ function(SealLake_Copy)
 
     foreach(FILE IN ITEMS ${ARG_FILES})
         if (NOT IS_ABSOLUTE "${FILE}")
-            set(FILE "${ARG_SOURCE_BASE_PATH}/${FILE}")
+            set(FILE "${ARG_SOURCE_PATH}/${FILE}")
         endif()
         get_filename_component(FILENAME "${FILE}" NAME)
         file(REMOVE "${ARG_DESTINATION}/${FILENAME}")
@@ -546,7 +551,7 @@ function(SealLake_Copy)
 
     foreach(DIR IN ITEMS ${ARG_DIRECTORIES})
         if (NOT IS_ABSOLUTE "${DIR}")
-            set(DIR "${ARG_SOURCE_BASE_PATH}/${DIR}")
+            set(DIR "${ARG_SOURCE_PATH}/${DIR}")
         endif()
         file(GLOB_RECURSE FILES "${DIR}/*")
         foreach(FILE IN ITEMS ${FILES})
@@ -561,7 +566,7 @@ function(SealLake_Copy)
 
     foreach(WILDCARD IN ITEMS ${ARG_WILDCARDS})
         if (NOT IS_ABSOLUTE "${WILDCARD}")
-            set(WILDCARD "${ARG_SOURCE_BASE_PATH}/${WILDCARD}")
+            set(WILDCARD "${ARG_SOURCE_PATH}/${WILDCARD}")
         endif()
         file(GLOB FILES "${WILDCARD}")
         foreach(FILE IN ITEMS ${FILES})
@@ -576,31 +581,41 @@ function(SealLake_ReplaceText)
      cmake_parse_arguments(
         ARG
         ""
-        "SOURCE_BASE_PATH"
+        "SOURCE;SOURCE_PATH"
         "FILES;DIRECTORIES;WILDCARDS;TEXT_REPLACEMENTS"
         ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
         SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
+    if (ARG_SOURCE AND ARG_SOURCE_PATH)
+        SealLake_Error("ARG_SOURCE and ARG_SOURCE_PATH arguments can't be specified simultaneously")
+    endif()
+    if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${ARG_SOURCE}")
+        SealLake_Error("Project source '${ARG_SOURCE}' doesn't exist, use DownloadSource() function to create a project source.")
+    endif()
+
+    if (ARG_SOURCE)
+        set(ARG_SOURCE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${ARG_SOURCE}")
+    endif()
     if (NOT ARG_TEXT_REPLACEMENTS)
          return()
-     endif()
+    endif()
 
-    if (NOT IS_ABSOLUTE "${ARG_SOURCE_BASE_PATH}")
-        set(ARG_SOURCE_BASE_PATH "${PROJECT_SOURCE_DIR}/${ARG_SOURCE_BASE_PATH}")
+    if (NOT IS_ABSOLUTE "${ARG_SOURCE_PATH}")
+        set(ARG_SOURCE_PATH "${PROJECT_SOURCE_DIR}/${ARG_SOURCE_PATH}")
     endif()
 
     foreach (FILE IN ITEMS ${ARG_FILES})
         if (NOT IS_ABSOLUTE "${FILE}")
-            set(FILE "${ARG_SOURCE_BASE_PATH}/${FILE}")
+            set(FILE "${ARG_SOURCE_PATH}/${FILE}")
         endif()
         _SealLakeImpl_ReplaceText("${FILE}" ${ARG_TEXT_REPLACEMENTS})
     endforeach()
 
     foreach(DIR IN ITEMS ${ARG_DIRECTORIES})
         if (NOT IS_ABSOLUTE "${DIR}")
-            set(DIR "${ARG_SOURCE_BASE_PATH}/${DIR}")
+            set(DIR "${ARG_SOURCE_PATH}/${DIR}")
         endif()
         file(GLOB_RECURSE FILES "${DIR}/*")
         foreach(FILE IN ITEMS ${FILES})
@@ -610,7 +625,7 @@ function(SealLake_ReplaceText)
 
     foreach(WILDCARD IN ITEMS ${ARG_WILDCARDS})
         if (NOT IS_ABSOLUTE "${WILDCARD}")
-            set(WILDCARD "${ARG_SOURCE_BASE_PATH}/${WILDCARD}")
+            set(WILDCARD "${ARG_SOURCE_PATH}/${WILDCARD}")
         endif()
         file(GLOB FILES "${WILDCARD}")
         foreach(FILE IN ITEMS ${FILES})
@@ -618,6 +633,80 @@ function(SealLake_ReplaceText)
         endforeach()
     endforeach()
 endfunction()
+
+function(SealLake_DownloadSource)
+    cmake_parse_arguments(
+        ARG
+        ""
+        "NAME;URL;GIT_REPOSITORY;GIT_TAG"
+        ""
+        ${ARGN}
+    )
+    if (ARG_UNPARSED_ARGUMENTS)
+        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+
+    include(FetchContent)
+    if (ARG_URL)
+        SealLake_StringAfterLast(${ARG_URL} "/" URL_NAME)
+        SealLake_Info("Download ${URL_NAME}")
+        string(TOLOWER ${URL_NAME} URL_NAME)
+        set(DOWNLOAD_TARGET "${URL_NAME}")
+        FetchContent_Declare(
+                ${DOWNLOAD_TARGET}
+                URL ${ARG_URL}
+        )
+    else()
+        SealLake_StringAfterLast(${ARG_GIT_REPOSITORY} "/" GIT_REPOSITORY_NAME)
+        SealLake_Info("Download ${GIT_REPOSITORY_NAME}")
+        string(TOLOWER ${GIT_REPOSITORY_NAME} GIT_REPOSITORY_NAME)
+        set(DOWNLOAD_TARGET "${GIT_REPOSITORY_NAME}_${ARG_GIT_TAG}")
+        FetchContent_Declare(
+                ${DOWNLOAD_TARGET}
+                GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
+                GIT_TAG        ${ARG_GIT_TAG}
+                GIT_SHALLOW    ON
+                GIT_PROGRESS TRUE
+        )
+    endif()
+    FetchContent_GetProperties(${DOWNLOAD_TARGET})
+    if(NOT ${DOWNLOAD_TARGET}_POPULATED)
+        FetchContent_Populate(${DOWNLOAD_TARGET})
+    endif()
+
+    SealLake_Copy(
+        SOURCE_PATH ${${DOWNLOAD_TARGET}_SOURCE_DIR}
+        DIRECTORIES .
+        DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}"
+    )
+endfunction()
+
+function(SealLake_Load SOURCE)
+    cmake_parse_arguments(
+        ARG
+        ""
+        "TARGET_NAME;"
+        ""
+        ${ARGN}
+    )
+    if (ARG_UNPARSED_ARGUMENTS)
+        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+    if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${SOURCE}")
+        SealLake_Error("Project source '${SOURCE}' doesn't exist, use DownloadSource() function to create a project source.")
+    endif()
+
+    set(CURRENT_TARGET ${SEAL_LAKE_TARGET})
+    set(SEAL_LAKE_TARGET ${ARG_TARGET_NAME})
+    add_subdirectory("${CMAKE_CURRENT_BINARY_DIR}/${SOURCE}" "${CMAKE_CURRENT_BINARY_DIR}/${ARG_TARGET_NAME}-build")
+    set(SEAL_LAKE_TARGET ${CURRENT_TARGET})
+    set(SEAL_LAKE_TARGET ${CURRENT_TARGET} PARENT_SCOPE)
+
+    set(${VARNAME}_POPULATED "${${VARNAME}_POPULATED}" PARENT_SCOPE)
+    set(${VARNAME}_SOURCE_DIR "${${VARNAME}_SOURCE_DIR}" PARENT_SCOPE)
+    set(${VARNAME}_BINARY_DIR "${${VARNAME}_BINARY_DIR}" PARENT_SCOPE)
+endfunction()
+
 
 function (SealLake_StringBeforeLast STR VALUE RESULT)
         _SealLakeImpl_StringBefore(${STR} ${VALUE} RESULT_VALUE REVERSE)
@@ -639,17 +728,20 @@ function (SealLake_StringAfterLast STR VALUE RESULT)
         set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
 endfunction()
 
-function (SealLake_Info MSG)
-    message("[${SEAL_LAKE_TARGET}] ${MSG}")
-endfunction()
+macro (SealLake_Info MSG)
+    _SealLakeImpl_TargetName(_SealLakeImpl_TARGET)
+    message("[${_SealLakeImpl_TARGET}] ${MSG}")
+endmacro()
 
-function (SealLake_Warning MSG)
-    message(WARNING "[${SEAL_LAKE_TARGET}] ${MSG}")
-endfunction()
+macro (SealLake_Warning MSG)
+    _SealLakeImpl_TargetName(_SealLakeImpl_TARGET)
+    message(WARNING "[${_SealLakeImpl_TARGET}] ${CMAKE_CURRENT_FUNCTION}(): ${MSG}")
+endmacro()
 
-function (SealLake_Error MSG)
-    message(FATAL_ERROR "[${SEAL_LAKE_TARGET}] ${MSG}")
-endfunction()
+macro (SealLake_Error MSG)
+    _SealLakeImpl_TargetName(_SealLakeImpl_TARGET)
+    message(FATAL_ERROR "[${_SealLakeImpl_TARGET}] ${CMAKE_CURRENT_FUNCTION}(): ${MSG}")
+endmacro()
 
 ########################################################################################################################
 ######################################## HERE BE IMPLEMENTATION DETAILS ################################################
@@ -819,16 +911,24 @@ endfunction()
 
 macro(_SealLakeImpl_UpdateTarget NAME)
     set(ARG_NAME "${NAME}")
-    if (ARG_NAME)
-        set(SEAL_LAKE_TARGET ${ARG_NAME})
-        set(SEAL_LAKE_TARGET ${ARG_NAME} PARENT_SCOPE)
-        message("DEBUG TARGET CUSTOM NAME: ${SEAL_LAKE_TARGET}")
-    else()
-        message("DEBUG TARGET_NAME_BEFORE: ${SEAL_LAKE_TARGET}")
-        if (NOT SEAL_LAKE_TARGET)
+    if (NOT SEAL_LAKE_TARGET)
+        if (ARG_NAME)
+            set(SEAL_LAKE_TARGET ${ARG_NAME})
+            set(SEAL_LAKE_TARGET ${ARG_NAME} PARENT_SCOPE)
+            message("DEBUG TARGET CUSTOM NAME: ${SEAL_LAKE_TARGET}")
+        else()
+            message("DEBUG TARGET_NAME_BEFORE: ${SEAL_LAKE_TARGET}")
             set(SEAL_LAKE_TARGET ${PROJECT_NAME})
             set(SEAL_LAKE_TARGET ${PROJECT_NAME} PARENT_SCOPE)
+            message("DEBUG TARGET_NAME_AFTER: ${SEAL_LAKE_TARGET}")
         endif()
-        message("DEBUG TARGET_NAME_AFTER: ${SEAL_LAKE_TARGET}")
     endif()
 endmacro()
+
+function(_SealLakeImpl_TargetName OUT_NAME)
+    if (NOT SEAL_LAKE_TARGET)
+        set(${OUT_NAME} ${PROJECT_NAME} PARENT_SCOPE)
+    else()
+        set(${OUT_NAME} ${SEAL_LAKE_TARGET} PARENT_SCOPE)
+    endif()
+endfunction()
