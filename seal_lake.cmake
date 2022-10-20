@@ -443,7 +443,7 @@ function(SealLake_Bundle)
         WILDCARDS    ${ARG_WILDCARDS}
         DESTINATION "${ARG_DESTINATION}"
     )
-    if (NOT SKIP_LOAD)
+    if (NOT ARG_SKIP_LOAD)
         SealLake_Load("${ARG_NAME}" TARGET_NAME "${ARG_NAME}")
     endif()
 endfunction()
