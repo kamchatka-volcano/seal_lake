@@ -414,7 +414,7 @@ endfunction()
 function(SealLake_Bundle)
     cmake_parse_arguments(
         ARG
-        ""
+        "SKIP_LOAD"
         "NAME;URL;GIT_REPOSITORY;GIT_TAG;DESTINATION"
         "FILES;DIRECTORIES;WILDCARDS;TEXT_REPLACEMENTS"
         ${ARGN}
@@ -429,6 +429,8 @@ function(SealLake_Bundle)
         GIT_TAG        "${ARG_GIT_TAG}"
         URL            "${ARG_URL}"
     )
+    set(SEAL_LAKE_SOURCE_${ARG_NAME} "${SEAL_LAKE_SOURCE_${ARG_NAME}}" PARENT_SCOPE)
+
     SealLake_ReplaceText(
         SOURCE             "${ARG_NAME}"
         DIRECTORIES        "."
@@ -441,7 +443,9 @@ function(SealLake_Bundle)
         WILDCARDS    ${ARG_WILDCARDS}
         DESTINATION "${ARG_DESTINATION}"
     )
-    SealLake_Load("${ARG_NAME}" TARGET_NAME "${ARG_NAME}")
+    if (NOT SKIP_LOAD)
+        SealLake_Load("${ARG_NAME}" TARGET_NAME "${ARG_NAME}")
+    endif()
 endfunction()
 
 function(SealLake_Copy)
@@ -611,6 +615,7 @@ function(SealLake_DownloadSource)
         DIRECTORIES .
         DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}"
     )
+    set(SEAL_LAKE_SOURCE_${ARG_NAME} "${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}" PARENT_SCOPE)
 endfunction()
 
 function(SealLake_Load SOURCE)
