@@ -436,6 +436,9 @@ function(SealLake_Bundle)
         DIRECTORIES        "."
         TEXT_REPLACEMENTS  ${ARG_TEXT_REPLACEMENTS}
     )
+    if (NOT ARG_SKIP_LOAD)
+        SealLake_Load("${ARG_NAME}" TARGET_NAME "${ARG_NAME}")
+    endif()
     SealLake_Copy(
         SOURCE      "${ARG_NAME}"
         FILES        ${ARG_FILES}
@@ -443,9 +446,6 @@ function(SealLake_Bundle)
         WILDCARDS    ${ARG_WILDCARDS}
         DESTINATION "${ARG_DESTINATION}"
     )
-    if (NOT ARG_SKIP_LOAD)
-        SealLake_Load("${ARG_NAME}" TARGET_NAME "${ARG_NAME}")
-    endif()
 endfunction()
 
 function(SealLake_Copy)
