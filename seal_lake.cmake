@@ -5,6 +5,7 @@ set(SEAL_LAKE_DEFAULT_SCOPE "")
 set(SEAL_LAKE_DEPENDENCIES "")
 
 include(FetchContent)
+include(CTest)
 
 function(SealLake_HeaderOnlyLibrary)
     cmake_parse_arguments(
