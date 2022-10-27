@@ -335,6 +335,9 @@ function(SealLake_InstallPackage)
     if (ARG_UNPARSED_ARGUMENTS)
         SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
+    if(NOT ARG_COMPATIBILITY)
+        SealLake_Error("COMPATIBILITY argument must be set")
+    endif()
     set(PACK_PATH "${CMAKE_INSTALL_LIBDIR}/cmake/${SEAL_LAKE_TARGET}")
 
     install(TARGETS "${SEAL_LAKE_TARGET}"
@@ -379,8 +382,11 @@ cmake_parse_arguments(
     if (ARG_UNPARSED_ARGUMENTS)
         SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
+    if(NOT NAME)
+        SealLake_Error("NAME argument must be set")
+    endif()
 
-find_package(${NAME} ${VERSION} QUIET)
+    find_package(${NAME} ${VERSION} QUIET)
     if (NOT ${${NAME}_FOUND})
         if (ARG_CMAKE_FILE)
             SealLake_Info("${NAME} wasn't found on your system, proceeding to use instructions from config ${ARG_CMAKE_FILE}.")
@@ -421,6 +427,9 @@ function(SealLake_Bundle)
     )
     if (ARG_UNPARSED_ARGUMENTS)
         SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+    if(NOT ARG_NAME)
+        SealLake_Error("NAME argument must be set")
     endif()
 
     SealLake_DownloadSource(
@@ -581,6 +590,9 @@ function(SealLake_DownloadSource)
     if (ARG_UNPARSED_ARGUMENTS)
         SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
+    if(NOT ARG_NAME)
+        SealLake_Error("NAME argument must be set")
+    endif()
 
     include(FetchContent)
     if (ARG_URL)
@@ -622,7 +634,7 @@ function(SealLake_Load SOURCE)
     cmake_parse_arguments(
         ARG
         ""
-        "TARGET_NAME;"
+        "TARGET_NAME"
         ""
         ${ARGN}
     )
@@ -635,7 +647,7 @@ function(SealLake_Load SOURCE)
 
     if (EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${SOURCE}/CMakeLists.txt)
         set(CURRENT_TARGET ${SEAL_LAKE_TARGET})
-        set(SEAL_LAKE_TARGET ${ARG_TARGET_NAME})
+        set(SEAL_LAKE_TARGET ${ARG_TARGET_NAME}) #it's fine if ARG_TARGET_NAME is empty
         add_subdirectory("${CMAKE_CURRENT_BINARY_DIR}/${SOURCE}" "${CMAKE_CURRENT_BINARY_DIR}/${ARG_TARGET_NAME}-build")
         set(SEAL_LAKE_TARGET ${CURRENT_TARGET})
         set(SEAL_LAKE_TARGET ${CURRENT_TARGET} PARENT_SCOPE)
@@ -858,6 +870,9 @@ macro(_SealLakeImpl_UpdateTarget NAME)
             set(SEAL_LAKE_TARGET ${PROJECT_NAME})
             set(SEAL_LAKE_TARGET ${PROJECT_NAME} PARENT_SCOPE)
         endif()
+    endif()
+    if (NOT SEAL_LAKE_TARGET)
+        SealLake_Error("Pass NAME argument or set project() before using this function")
     endif()
 endmacro()
 
