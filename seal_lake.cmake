@@ -130,9 +130,9 @@ function (SealLake_GoogleTest)
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
         set(INSTALL_GTEST OFF)
         SealLake_Import(googletest 1.12.1
-          GIT_REPOSITORY https://github.com/google/googletest.git
-          GIT_TAG release-1.12.1
-        )
+            GIT_REPOSITORY https://github.com/google/googletest.git
+            GIT_TAG release-1.12.1
+            )
     endif()
     enable_testing()
     find_package(Threads REQUIRED)
@@ -159,7 +159,7 @@ function (SealLake_CompileFeatures)
 endfunction()
 
 function (SealLake_Includes)
-  if (SEAL_LAKE_LIB_TYPE STREQUAL INTERFACE)
+    if (SEAL_LAKE_LIB_TYPE STREQUAL INTERFACE)
         SealLake_InterfaceIncludes(${ARGN})
     else()
         SealLake_BuildStageIncludes(${ARGN})
@@ -167,7 +167,7 @@ function (SealLake_Includes)
 endfunction()
 
 function(SealLake_BuildStageIncludes)
-     foreach (PATH IN ITEMS ${ARGN})
+    foreach (PATH IN ITEMS ${ARGN})
         if (IS_ABSOLUTE ${PATH})
             set(RESULT_PATH ${PATH})
         else()
@@ -175,9 +175,9 @@ function(SealLake_BuildStageIncludes)
         endif()
         SealLake_Info("Add build stage include path: ${RESULT_PATH}")
         target_include_directories(
-               ${SEAL_LAKE_TARGET}
-               ${SEAL_LAKE_DEFAULT_SCOPE}
-               $<BUILD_INTERFACE:${RESULT_PATH}>
+            ${SEAL_LAKE_TARGET}
+            ${SEAL_LAKE_DEFAULT_SCOPE}
+            $<BUILD_INTERFACE:${RESULT_PATH}>
         )
     endforeach()
 endfunction()
@@ -191,9 +191,9 @@ function (SealLake_InterfaceIncludes)
         endif()
         SealLake_Info("Add interface include path: ${RESULT_PATH}")
         target_include_directories(
-               ${SEAL_LAKE_TARGET}
-               ${SEAL_LAKE_DEFAULT_SCOPE}
-               $<INSTALL_INTERFACE:${RESULT_PATH}>
+            ${SEAL_LAKE_TARGET}
+            ${SEAL_LAKE_DEFAULT_SCOPE}
+            $<INSTALL_INTERFACE:${RESULT_PATH}>
         )
     endforeach()
 endfunction()
@@ -289,11 +289,11 @@ endfunction()
 
 function (SealLake_Install)
     cmake_parse_arguments(
-            ARG
-            ""
-            "DESTINATION"
-            "FILES;DIRECTORIES"
-            ${ARGN}
+        ARG
+        ""
+        "DESTINATION"
+        "FILES;DIRECTORIES"
+        ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
         SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
@@ -341,7 +341,7 @@ function(SealLake_InstallPackage)
     set(PACK_PATH "${CMAKE_INSTALL_LIBDIR}/cmake/${SEAL_LAKE_TARGET}")
 
     install(TARGETS "${SEAL_LAKE_TARGET}"
-            EXPORT "${SEAL_LAKE_TARGET}-targets"
+        EXPORT "${SEAL_LAKE_TARGET}-targets"
     )
 
     if (ARG_NAMESPACE)
@@ -351,28 +351,28 @@ function(SealLake_InstallPackage)
     endif()
 
     install(EXPORT "${SEAL_LAKE_TARGET}-targets"
-            FILE "${SEAL_LAKE_TARGET}Targets.cmake"
-            NAMESPACE "${NAMESPACE}::"
-            DESTINATION "${PACK_PATH}"
+        FILE "${SEAL_LAKE_TARGET}Targets.cmake"
+        NAMESPACE "${NAMESPACE}::"
+        DESTINATION "${PACK_PATH}"
     )
 
     include(CMakePackageConfigHelpers)
     _SealLakeImpl_CreatePackageConfig(DEPENDENCIES ${ARG_DEPENDENCIES})
 
     write_basic_package_version_file(
-            "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}ConfigVersion.cmake"
-            COMPATIBILITY "${ARG_COMPATIBILITY}"
-            ARCH_INDEPENDENT
+        "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}ConfigVersion.cmake"
+        COMPATIBILITY "${ARG_COMPATIBILITY}"
+        ARCH_INDEPENDENT
     )
     install(FILES
-            "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}Config.cmake"
-            "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}ConfigVersion.cmake"
-            DESTINATION "${PACK_PATH}"
+        "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}Config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}ConfigVersion.cmake"
+        DESTINATION "${PACK_PATH}"
     )
 endfunction()
 
 function (SealLake_Import NAME VERSION)
-cmake_parse_arguments(
+    cmake_parse_arguments(
         ARG
         ""
         "CMAKE_FILE;URL;GIT_REPOSITORY;GIT_TAG"
@@ -398,16 +398,16 @@ cmake_parse_arguments(
         Set(FETCHCONTENT_QUIET FALSE)
         if (ARG_URL)
             FetchContent_Declare(
-                    ${NAME}
-                    URL ${ARG_URL}
+                ${NAME}
+                URL ${ARG_URL}
             )
         else()
             FetchContent_Declare(
-                    ${NAME}
-                    GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
-                    GIT_TAG        ${ARG_GIT_TAG}
-                    GIT_SHALLOW    ON
-                    GIT_PROGRESS TRUE
+                ${NAME}
+                GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
+                GIT_TAG        ${ARG_GIT_TAG}
+                GIT_SHALLOW    ON
+                GIT_PROGRESS TRUE
             )
         endif()
         FetchContent_MakeAvailable(${NAME})
@@ -523,7 +523,7 @@ function(SealLake_Copy)
 endfunction()
 
 function(SealLake_ReplaceText)
-     cmake_parse_arguments(
+    cmake_parse_arguments(
         ARG
         ""
         "SOURCE;SOURCE_PATH"
@@ -544,7 +544,7 @@ function(SealLake_ReplaceText)
         set(ARG_SOURCE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${ARG_SOURCE}")
     endif()
     if (NOT ARG_TEXT_REPLACEMENTS)
-         return()
+        return()
     endif()
 
     if (NOT IS_ABSOLUTE "${ARG_SOURCE_PATH}")
@@ -600,9 +600,17 @@ function(SealLake_DownloadSource)
         SealLake_Info("Download ${URL_NAME}")
         string(TOLOWER ${URL_NAME} URL_NAME)
         set(DOWNLOAD_TARGET "${URL_NAME}")
+
+        SealLake_StringAfterLast(${URL_NAME} "." URL_EXT)
+        if (URL_EXT STREQUAL "h" OR URL_EXT STREQUAL "hpp")
+            set(NO_EXTRACT ON)
+        else()
+            set(NO_EXTRACT OFF)
+        endif()
         FetchContent_Declare(
-                ${DOWNLOAD_TARGET}
-                URL ${ARG_URL}
+            ${DOWNLOAD_TARGET}
+            DOWNLOAD_NO_EXTRACT ${NO_EXTRACT}
+            URL ${ARG_URL}
         )
     else()
         SealLake_StringAfterLast(${ARG_GIT_REPOSITORY} "/" GIT_REPOSITORY_NAME)
@@ -610,11 +618,11 @@ function(SealLake_DownloadSource)
         string(TOLOWER ${GIT_REPOSITORY_NAME} GIT_REPOSITORY_NAME)
         set(DOWNLOAD_TARGET "${GIT_REPOSITORY_NAME}_${ARG_GIT_TAG}")
         FetchContent_Declare(
-                ${DOWNLOAD_TARGET}
-                GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
-                GIT_TAG        ${ARG_GIT_TAG}
-                GIT_SHALLOW    ON
-                GIT_PROGRESS TRUE
+            ${DOWNLOAD_TARGET}
+            GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
+            GIT_TAG        ${ARG_GIT_TAG}
+            GIT_SHALLOW    ON
+            GIT_PROGRESS TRUE
         )
     endif()
     FetchContent_GetProperties(${DOWNLOAD_TARGET})
@@ -660,23 +668,23 @@ endfunction()
 
 
 function (SealLake_StringBeforeLast STR VALUE RESULT)
-        _SealLakeImpl_StringBefore(${STR} ${VALUE} RESULT_VALUE REVERSE)
-        set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
+    _SealLakeImpl_StringBefore(${STR} ${VALUE} RESULT_VALUE REVERSE)
+    set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
 endfunction()
 
 function (SealLake_StringBeforeFirst STR VALUE RESULT)
-        _SealLakeImpl_StringBefore(${STR} ${VALUE} RESULT_VALUE "")
-        set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
+    _SealLakeImpl_StringBefore(${STR} ${VALUE} RESULT_VALUE "")
+    set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
 endfunction()
 
 function (SealLake_StringAfterFirst STR VALUE RESULT)
-        _SealLakeImpl_StringAfter(${STR} ${VALUE} RESULT_VALUE "")
-        set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
+    _SealLakeImpl_StringAfter(${STR} ${VALUE} RESULT_VALUE "")
+    set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
 endfunction()
 
 function (SealLake_StringAfterLast STR VALUE RESULT)
-        _SealLakeImpl_StringAfter(${STR} ${VALUE} RESULT_VALUE REVERSE)
-        set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
+    _SealLakeImpl_StringAfter(${STR} ${VALUE} RESULT_VALUE REVERSE)
+    set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
 endfunction()
 
 macro (SealLake_Info MSG)
@@ -720,10 +728,10 @@ macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
         add_library("${SEAL_LAKE_TARGET}::${SEAL_LAKE_TARGET}" ALIAS ${SEAL_LAKE_TARGET})
     endif()
     target_include_directories(
-            ${SEAL_LAKE_TARGET}
-            ${LIBRARY_SCOPE}
-            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        ${SEAL_LAKE_TARGET}
+        ${LIBRARY_SCOPE}
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
 
     SealLake_Properties(${ARG_PROPERTIES})
@@ -758,9 +766,9 @@ macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
     if (IS_STANDALONE OR INSTALL_${VARNAME})
         if(ARG_INSTALL_BUILD_RESULT)
             install(TARGETS ${SEAL_LAKE_TARGET}
-                    ${ARG_INSTALL_BUILD_RESULT} DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-                    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${SEAL_LAKE_TARGET}"
-            )
+                ${ARG_INSTALL_BUILD_RESULT} DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+                PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${SEAL_LAKE_TARGET}"
+                )
             if (NOT ARG_PUBLIC_HEADERS)
                 if (EXISTS "${PROJECT_SOURCE_DIR}/include/${SEAL_LAKE_TARGET}")
                     install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${SEAL_LAKE_TARGET} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
@@ -770,9 +778,9 @@ macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
             install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${SEAL_LAKE_TARGET} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
         endif()
         SealLake_InstallPackage(
-                COMPATIBILITY SameMajorVersion
-                NAMESPACE ${ARG_NAMESPACE}
-                DEPENDENCIES ${DEPENDENCIES}
+            COMPATIBILITY SameMajorVersion
+            NAMESPACE ${ARG_NAMESPACE}
+            DEPENDENCIES ${DEPENDENCIES}
         )
     endif()
 endmacro()
@@ -817,9 +825,9 @@ function (_SealLakeImpl_CreatePackageConfig)
 
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}Config.cmake.in" ${RESULT})
     configure_package_config_file("${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}Config.cmake.in"
-            "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}Config.cmake"
-            INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${SEAL_LAKE_TARGET}"
-    )
+        "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}Config.cmake"
+        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${SEAL_LAKE_TARGET}"
+        )
 endfunction()
 
 function(_SealLakeImpl_ReplaceText FILE)
@@ -844,20 +852,20 @@ function(_SealLakeImpl_ReplaceText FILE)
 endfunction()
 
 function(_SealLakeImpl_StringBefore STR VALUE RESULT REVERSE)
-        string(FIND ${STR} ${VALUE} VALUE_POS ${REVERSE})
-        string(LENGTH ${STR} STR_LENGTH)
-        string(SUBSTRING ${STR}  0 ${VALUE_POS} RESULT_VALUE)
-        set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
+    string(FIND ${STR} ${VALUE} VALUE_POS ${REVERSE})
+    string(LENGTH ${STR} STR_LENGTH)
+    string(SUBSTRING ${STR}  0 ${VALUE_POS} RESULT_VALUE)
+    set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
 endfunction()
 
 function (_SealLakeImpl_StringAfter STR VALUE RESULT REVERSE)
-        string(FIND ${STR} ${VALUE} VALUE_POS ${REVERSE})
-        string(LENGTH ${STR} STR_LENGTH)
-        string(LENGTH ${VALUE} VALUE_LENGTH)
-        MATH(EXPR RESULT_LENGTH "${STR_LENGTH} - ${VALUE_POS} - ${VALUE_LENGTH}")
-        MATH(EXPR RESULT_POS "${VALUE_POS} + ${VALUE_LENGTH}")
-        string(SUBSTRING ${STR} ${RESULT_POS} ${RESULT_LENGTH} RESULT_VALUE)
-        set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
+    string(FIND ${STR} ${VALUE} VALUE_POS ${REVERSE})
+    string(LENGTH ${STR} STR_LENGTH)
+    string(LENGTH ${VALUE} VALUE_LENGTH)
+    MATH(EXPR RESULT_LENGTH "${STR_LENGTH} - ${VALUE_POS} - ${VALUE_LENGTH}")
+    MATH(EXPR RESULT_POS "${VALUE_POS} + ${VALUE_LENGTH}")
+    string(SUBSTRING ${STR} ${RESULT_POS} ${RESULT_LENGTH} RESULT_VALUE)
+    set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
 endfunction()
 
 macro(_SealLakeImpl_UpdateTarget NAME)
