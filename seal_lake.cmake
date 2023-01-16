@@ -771,27 +771,34 @@ macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
     endif()
 
     SealLake_IsStandalone(IS_STANDALONE)
-    string(TOUPPER ${SEAL_LAKE_TARGET} VARNAME)
-    set(${INSTALL_${VARNAME}} "Install ${SEAL_LAKE_TARGET}" OFF PARENT_SCOPE)
-    if (IS_STANDALONE OR INSTALL_${VARNAME})
-        if(ARG_INSTALL_BUILD_RESULT)
-            install(TARGETS ${SEAL_LAKE_TARGET}
-                ${ARG_INSTALL_BUILD_RESULT} DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-                PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${SEAL_LAKE_TARGET}"
+    string(TOUPPER ${SEAL_LAKE_TARGET} TARGET)
+    set(${INSTALL_${TARGET}} "Install ${SEAL_LAKE_TARGET}" OFF PARENT_SCOPE)
+    if (SEAL_LAKE_LIB_TYPE STREQUAL "SHARED")
+        set(${INSTALL_${TARGET}_SHARED_OBJECT} "Install ${SEAL_LAKE_TARGET} shared object with development files" OFF PARENT_SCOPE)
+    endif()
+    if (SEAL_LAKE_LIB_TYPE STREQUAL "SHARED" AND INSTALL_${TARGET}_SHARED_OBJECT)
+        install(TARGETS ${SEAL_LAKE_TARGET} ${ARG_INSTALL_BUILD_RESULT} DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+    else()
+        if (IS_STANDALONE OR INSTALL_${TARGET})
+            if(ARG_INSTALL_BUILD_RESULT)
+                install(TARGETS ${SEAL_LAKE_TARGET}
+                    ${ARG_INSTALL_BUILD_RESULT} DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+                    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${SEAL_LAKE_TARGET}"
                 )
-            if (NOT ARG_PUBLIC_HEADERS)
-                if (EXISTS "${PROJECT_SOURCE_DIR}/include/${SEAL_LAKE_TARGET}")
-                    install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${SEAL_LAKE_TARGET} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+                if (NOT ARG_PUBLIC_HEADERS)
+                    if (EXISTS "${PROJECT_SOURCE_DIR}/include/${SEAL_LAKE_TARGET}")
+                        install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${SEAL_LAKE_TARGET} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+                    endif()
                 endif()
+            else()
+                install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${SEAL_LAKE_TARGET} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
             endif()
-        else()
-            install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${SEAL_LAKE_TARGET} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+            SealLake_InstallPackage(
+                COMPATIBILITY SameMajorVersion
+                NAMESPACE ${ARG_NAMESPACE}
+                DEPENDENCIES ${DEPENDENCIES}
+            )
         endif()
-        SealLake_InstallPackage(
-            COMPATIBILITY SameMajorVersion
-            NAMESPACE ${ARG_NAMESPACE}
-            DEPENDENCIES ${DEPENDENCIES}
-        )
     endif()
 endmacro()
 
