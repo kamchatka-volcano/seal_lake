@@ -4,19 +4,20 @@ set(SEAL_LAKE_LIB_TYPE "")
 set(SEAL_LAKE_DEFAULT_SCOPE "")
 set(SEAL_LAKE_DEPENDENCIES "")
 
-include(FetchContent)
+include(${CMAKE_CURRENT_LIST_DIR}/CPM.cmake)
 include(CTest)
+include(GNUInstallDirs)
 
 function(SealLake_HeaderOnlyLibrary)
     cmake_parse_arguments(
-        ARG
-        ""
-        "NAME;NAMESPACE"
-        "PROPERTIES;COMPILE_FEATURES;DEPENDENCIES;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;"
-        ${ARGN}
+            ARG
+            ""
+            "NAME;NAMESPACE"
+            "PROPERTIES;COMPILE_FEATURES;DEPENDENCIES;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;"
+            ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     _SealLakeImpl_UpdateTarget("${ARG_NAME}")
     _SealLakeImpl_Library(INTERFACE INTERFACE "")
@@ -24,14 +25,14 @@ endfunction()
 
 function(SealLake_ObjectLibrary)
     cmake_parse_arguments(
-        ARG
-        ""
-        "NAME;NAMESPACE"
-        "PROPERTIES;COMPILE_FEATURES;DEPENDENCIES;SOURCES;PUBLIC_HEADERS;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;BUILD_STAGE_LIBRARIES;"
-        ${ARGN}
+            ARG
+            ""
+            "NAME;NAMESPACE"
+            "PROPERTIES;COMPILE_FEATURES;DEPENDENCIES;SOURCES;PUBLIC_HEADERS;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;BUILD_STAGE_LIBRARIES;"
+            ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     _SealLakeImpl_UpdateTarget("${ARG_NAME}")
     _SealLakeImpl_Library(OBJECT PUBLIC ARCHIVE)
@@ -39,14 +40,14 @@ endfunction()
 
 function(SealLake_StaticLibrary)
     cmake_parse_arguments(
-        ARG
-        ""
-        "NAME;NAMESPACE"
-        "PROPERTIES;COMPILE_FEATURES;DEPENDENCIES;SOURCES;PUBLIC_HEADERS;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;BUILD_STAGE_LIBRARIES;"
-        ${ARGN}
+            ARG
+            ""
+            "NAME;NAMESPACE"
+            "PROPERTIES;COMPILE_FEATURES;DEPENDENCIES;SOURCES;PUBLIC_HEADERS;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;BUILD_STAGE_LIBRARIES;"
+            ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     _SealLakeImpl_UpdateTarget("${ARG_NAME}")
     string(TOUPPER ${SEAL_LAKE_TARGET} VARNAME)
@@ -61,14 +62,14 @@ endfunction()
 
 function(SealLake_SharedLibrary)
     cmake_parse_arguments(
-        ARG
-        ""
-        "NAME;NAMESPACE"
-        "PROPERTIES;COMPILE_FEATURES;DEPENDENCIES;SOURCES;PUBLIC_HEADERS;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;BUILD_STAGE_LIBRARIES"
-        ${ARGN}
+            ARG
+            ""
+            "NAME;NAMESPACE"
+            "PROPERTIES;COMPILE_FEATURES;DEPENDENCIES;SOURCES;PUBLIC_HEADERS;INCLUDES;INTERFACE_INCLUDES;BUILD_STAGE_INCLUDES;LIBRARIES;INTERFACE_LIBRARIES;BUILD_STAGE_LIBRARIES"
+            ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     _SealLakeImpl_UpdateTarget("${ARG_NAME}")
     _SealLakeImpl_Library(SHARED PUBLIC LIBRARY)
@@ -76,14 +77,14 @@ endfunction()
 
 function(SealLake_Executable)
     cmake_parse_arguments(
-        ARG
-        ""
-        "NAME"
-        "PROPERTIES;COMPILE_FEATURES;SOURCES;INCLUDES;LIBRARIES"
-        ${ARGN}
+            ARG
+            ""
+            "NAME"
+            "PROPERTIES;COMPILE_FEATURES;SOURCES;INCLUDES;LIBRARIES"
+            ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     _SealLakeImpl_UpdateTarget("${ARG_NAME}")
     set(SEAL_LAKE_LIB_TYPE "")
@@ -98,9 +99,9 @@ function(SealLake_Executable)
 
     add_executable(${SEAL_LAKE_TARGET} ${ARG_SOURCES})
     target_include_directories(${SEAL_LAKE_TARGET} PRIVATE ${ARG_INCLUDES})
-    SealLake_Properties(${ARG_PROPERTIES})
-    SealLake_CompileFeatures(${ARG_COMPILE_FEATURES})
-    SealLake_Libraries(${ARG_LIBRARIES})
+    SealLake_AddProperties(${ARG_PROPERTIES})
+    SealLake_AddCompileFeatures(${ARG_COMPILE_FEATURES})
+    SealLake_AddLibraries(${ARG_LIBRARIES})
     SealLake_IsStandalone(IS_STANDALONE)
     string(TOUPPER ${SEAL_LAKE_TARGET} VARNAME)
     set(${INSTALL_${VARNAME}} "Install ${SEAL_LAKE_TARGET}" OFF PARENT_SCOPE)
@@ -111,14 +112,14 @@ endfunction()
 
 function (SealLake_GoogleTest)
     cmake_parse_arguments(
-        ARG
-        "SKIP_FETCHING"
-        "NAME"
-        "PROPERTIES;COMPILE_FEATURES;SOURCES;INCLUDES;LIBRARIES"
-        ${ARGN}
+            ARG
+            "SKIP_FETCHING"
+            "NAME"
+            "PROPERTIES;COMPILE_FEATURES;SOURCES;INCLUDES;LIBRARIES"
+            ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     _SealLakeImpl_UpdateTarget("${ARG_NAME}")
     set(SEAL_LAKE_LIB_TYPE "")
@@ -130,9 +131,9 @@ function (SealLake_GoogleTest)
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
         set(INSTALL_GTEST OFF)
         SealLake_Import(googletest 1.12.1
-            GIT_REPOSITORY https://github.com/google/googletest.git
-            GIT_TAG release-1.12.1
-            )
+                GIT_REPOSITORY https://github.com/google/googletest.git
+                GIT_TAG release-1.12.1
+        )
     endif()
     enable_testing()
     find_package(Threads REQUIRED)
@@ -140,87 +141,87 @@ function (SealLake_GoogleTest)
     include(GoogleTest)
     add_executable(${SEAL_LAKE_TARGET} ${ARG_SOURCES})
     target_include_directories(${SEAL_LAKE_TARGET} PRIVATE ${ARG_INCLUDES})
-    SealLake_Properties(${ARG_PROPERTIES})
-    SealLake_CompileFeatures(${ARG_COMPILE_FEATURES})
-    SealLake_Libraries(${ARG_LIBRARIES} Threads::Threads GTest::gtest_main GTest::gmock_main)
+    SealLake_AddProperties(${ARG_PROPERTIES})
+    SealLake_AddCompileFeatures(${ARG_COMPILE_FEATURES})
+    SealLake_AddLibraries(${ARG_LIBRARIES} Threads::Threads GTest::gtest_main GTest::gmock_main)
     gtest_discover_tests(${SEAL_LAKE_TARGET})
 endfunction()
 
-function (SealLake_Properties)
+function (SealLake_AddProperties)
     if (ARGN)
         set_target_properties(${SEAL_LAKE_TARGET} PROPERTIES ${ARGN})
     endif()
 endfunction()
 
-function (SealLake_CompileFeatures)
+function (SealLake_AddCompileFeatures)
     foreach(FEATURE IN ITEMS ${ARGN})
         target_compile_features(${SEAL_LAKE_TARGET} ${SEAL_LAKE_DEFAULT_SCOPE} ${FEATURE})
     endforeach()
 endfunction()
 
-function (SealLake_Includes)
+function (SealLake_AddIncludes)
     if (SEAL_LAKE_LIB_TYPE STREQUAL INTERFACE)
-        SealLake_InterfaceIncludes(${ARGN})
+        SealLake_AddInterfaceIncludes(${ARGN})
     else()
-        SealLake_BuildStageIncludes(${ARGN})
+        SealLake_AddBuildStageIncludes(${ARGN})
     endif()
 endfunction()
 
-function(SealLake_BuildStageIncludes)
+function(SealLake_AddBuildStageIncludes)
     foreach (PATH IN ITEMS ${ARGN})
         if (IS_ABSOLUTE ${PATH})
             set(RESULT_PATH ${PATH})
         else()
             set(RESULT_PATH ${PROJECT_SOURCE_DIR}/include/${PATH})
         endif()
-        SealLake_Info("Add build stage include path: ${RESULT_PATH}")
+        SealLake_LogInfo("Add build stage include path: ${RESULT_PATH}")
         target_include_directories(
-            ${SEAL_LAKE_TARGET}
-            ${SEAL_LAKE_DEFAULT_SCOPE}
-            $<BUILD_INTERFACE:${RESULT_PATH}>
+                ${SEAL_LAKE_TARGET}
+                ${SEAL_LAKE_DEFAULT_SCOPE}
+                $<BUILD_INTERFACE:${RESULT_PATH}>
         )
     endforeach()
 endfunction()
 
-function (SealLake_InterfaceIncludes)
+function (SealLake_AddInterfaceIncludes)
     foreach (PATH IN ITEMS ${ARGN})
         if (IS_ABSOLUTE ${PATH})
             set(RESULT_PATH ${PATH})
         else()
             set(RESULT_PATH ${CMAKE_INSTALL_INCLUDEDIR}/${PATH})
         endif()
-        SealLake_Info("Add interface include path: ${RESULT_PATH}")
+        SealLake_LogInfo("Add interface include path: ${RESULT_PATH}")
         target_include_directories(
-            ${SEAL_LAKE_TARGET}
-            ${SEAL_LAKE_DEFAULT_SCOPE}
-            $<INSTALL_INTERFACE:${RESULT_PATH}>
+                ${SEAL_LAKE_TARGET}
+                ${SEAL_LAKE_DEFAULT_SCOPE}
+                $<INSTALL_INTERFACE:${RESULT_PATH}>
         )
     endforeach()
 endfunction()
 
-function (SealLake_Libraries)
+function (SealLake_AddLibraries)
     if (SEAL_LAKE_LIB_TYPE STREQUAL INTERFACE)
-        SealLake_InterfaceLibraries(${ARGN})
+        SealLake_AddInterfaceLibraries(${ARGN})
     else()
-        SealLake_BuildStageLibraries(${ARGN})
+        SealLake_AddBuildStageLibraries(${ARGN})
     endif()
 endfunction()
 
-function (SealLake_InterfaceLibraries)
+function (SealLake_AddInterfaceLibraries)
     foreach (LIB IN ITEMS ${ARGN})
-        SealLake_Info("Link library ${LIB}")
+        SealLake_LogInfo("Link library ${LIB}")
         target_link_libraries(${SEAL_LAKE_TARGET} ${SEAL_LAKE_DEFAULT_SCOPE} ${LIB})
     endforeach()
 endfunction()
 
-function (SealLake_BuildStageLibraries)
+function (SealLake_AddBuildStageLibraries)
     if (SEAL_LAKE_LIB_TYPE STREQUAL INTERFACE)
-        SealLake_Warning("Header only libraries don't have a build stage to establish a build link dependency")
+        SealLake_LogWarning("Header only libraries don't have a build stage to establish a build link dependency")
         return()
     endif()
 
     foreach (LIB IN ITEMS ${ARGN})
-        SealLake_Info("Link library ${LIB}")
+        SealLake_LogInfo("Link library ${LIB}")
         if (SEAL_LAKE_LIB_TYPE STREQUAL STATIC OR SEAL_LAKE_LIB_TYPE STREQUAL OBJECT)
             target_link_libraries(${SEAL_LAKE_TARGET} PRIVATE "$<BUILD_INTERFACE:${LIB}>")
         else()
@@ -229,23 +230,23 @@ function (SealLake_BuildStageLibraries)
     endforeach()
 endfunction()
 
-function (SealLake_Dependencies)
+function (SealLake_AddDependencies)
     list(APPEND DEPENDENCIES ${SEAL_LAKE_DEPENDENCIES})
     list(APPEND DEPENDENCIES ${ARGN})
     set(SEAL_LAKE_DEPENDENCIES ${DEPENDENCIES} PARENT_SCOPE)
     _SealLakeImpl_CreatePackageConfig(DEPENDENCIES ${DEPENDENCIES})
 endfunction()
 
-function (SealLake_OptionalBuildSteps)
+function (SealLake_OptionalSubProjects)
     cmake_parse_arguments(
-        ARG
-        ""
-        ""
-        "IF_ENABLED;IF_ENABLED_AND_STANDALONE;IF_ENABLED_OR_STANDALONE"
-        ${ARGN}
+            ARG
+            ""
+            ""
+            "IF_ENABLED;IF_ENABLED_AND_STANDALONE;IF_ENABLED_OR_STANDALONE"
+            ${ARGN}
     )
     macro(AddDirectory)
-        SealLake_Info("Add build step ${DIR}")
+        SealLake_LogInfo("Add build step ${DIR}")
         set(CURRENT_TARGET ${SEAL_LAKE_TARGET})
         set(SEAL_LAKE_TARGET "")
         add_subdirectory(${DIR})
@@ -289,14 +290,14 @@ endfunction()
 
 function (SealLake_Install)
     cmake_parse_arguments(
-        ARG
-        ""
-        "DESTINATION"
-        "FILES;DIRECTORIES"
-        ${ARGN}
+            ARG
+            ""
+            "DESTINATION"
+            "FILES;DIRECTORIES"
+            ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if(ARG_DESTINATION)
         if (IS_ABSOLUTE ${ARG_DESTINATION})
@@ -323,7 +324,7 @@ function(SealLake_IsStandalone IS_STANDALONE)
     endif()
 endfunction()
 
-function(SealLake_IsInstalled RESULT)
+function(SealLake_IsInstallRequired RESULT)
     SealLake_IsStandalone(IS_STANDALONE)
     _SealLakeImpl_TargetName(TARGET)
     string(TOUPPER ${TARGET} TARGET_NAME)
@@ -336,22 +337,22 @@ endfunction()
 
 function(SealLake_InstallPackage)
     cmake_parse_arguments(
-        ARG
-        ""
-        "COMPATIBILITY;NAMESPACE"
-        "DEPENDENCIES"
-        ${ARGN}
+            ARG
+            ""
+            "COMPATIBILITY;NAMESPACE"
+            "DEPENDENCIES"
+            ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if(NOT ARG_COMPATIBILITY)
-        SealLake_Error("COMPATIBILITY argument must be set")
+        SealLake_LogError("COMPATIBILITY argument must be set")
     endif()
     set(PACK_PATH "${CMAKE_INSTALL_LIBDIR}/cmake/${SEAL_LAKE_TARGET}")
 
     install(TARGETS "${SEAL_LAKE_TARGET}"
-        EXPORT "${SEAL_LAKE_TARGET}-targets"
+            EXPORT "${SEAL_LAKE_TARGET}-targets"
     )
 
     if (ARG_NAMESPACE)
@@ -361,128 +362,105 @@ function(SealLake_InstallPackage)
     endif()
 
     install(EXPORT "${SEAL_LAKE_TARGET}-targets"
-        FILE "${SEAL_LAKE_TARGET}Targets.cmake"
-        NAMESPACE "${NAMESPACE}::"
-        DESTINATION "${PACK_PATH}"
+            FILE "${SEAL_LAKE_TARGET}Targets.cmake"
+            NAMESPACE "${NAMESPACE}::"
+            DESTINATION "${PACK_PATH}"
     )
 
     include(CMakePackageConfigHelpers)
     _SealLakeImpl_CreatePackageConfig(DEPENDENCIES ${ARG_DEPENDENCIES})
 
     write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}ConfigVersion.cmake"
-        COMPATIBILITY "${ARG_COMPATIBILITY}"
-        ARCH_INDEPENDENT
+            "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}ConfigVersion.cmake"
+            COMPATIBILITY "${ARG_COMPATIBILITY}"
+            ARCH_INDEPENDENT
     )
     install(FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}Config.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}ConfigVersion.cmake"
-        DESTINATION "${PACK_PATH}"
+            "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}Config.cmake"
+            "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}ConfigVersion.cmake"
+            DESTINATION "${PACK_PATH}"
     )
 endfunction()
 
 function (SealLake_Import NAME VERSION)
     cmake_parse_arguments(
-        ARG
-        ""
-        "CMAKE_FILE;URL;GIT_REPOSITORY;GIT_TAG"
-        ""
-        ${ARGN}
+            ARG
+            ""
+            "CMAKE_FILE;URL;GIT_REPOSITORY;GIT_TAG"
+            ""
+            ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if(NOT NAME)
-        SealLake_Error("NAME argument must be set")
+        SealLake_LogError("NAME argument must be set")
     endif()
 
-    find_package(${NAME} ${VERSION} QUIET)
-    if (NOT ${${NAME}_FOUND})
-        if (ARG_CMAKE_FILE)
-            SealLake_Info("${NAME} wasn't found on your system, proceeding to use instructions from config ${ARG_CMAKE_FILE}.")
-            include("${ARG_CMAKE_FILE}")
-            return()
-        endif()
-
-        SealLake_Info("${NAME} wasn't found on your system, proceeding to downloading it.")
-        Set(FETCHCONTENT_QUIET FALSE)
-        if (ARG_URL)
-            FetchContent_Declare(
-                ${NAME}
-                URL ${ARG_URL}
-            )
-        else()
-            FetchContent_Declare(
-                ${NAME}
-                GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
-                GIT_TAG        ${ARG_GIT_TAG}
-                GIT_SHALLOW    ON
-                GIT_PROGRESS TRUE
-            )
-        endif()
-        FetchContent_MakeAvailable(${NAME})
-        set(${VARNAME}_POPULATED "${${VARNAME}_POPULATED}" PARENT_SCOPE)
-        set(${VARNAME}_SOURCE_DIR "${${VARNAME}_SOURCE_DIR}" PARENT_SCOPE)
-        set(${VARNAME}_BINARY_DIR "${${VARNAME}_BINARY_DIR}" PARENT_SCOPE)
-    endif()
+    CPMFindPackage(
+            NAME ${NAME}
+            VERSION ${VERSION}
+            GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
+            GIT_TAG ${ARG_GIT_TAG}
+    )
 endfunction()
 
 function(SealLake_Bundle)
     cmake_parse_arguments(
-        ARG
-        "SKIP_LOAD"
-        "NAME;URL;GIT_REPOSITORY;GIT_TAG;DESTINATION"
-        "FILES;DIRECTORIES;WILDCARDS;TEXT_REPLACEMENTS"
-        ${ARGN}
+            ARG
+            "SKIP_LOAD"
+            "NAME;URL;GIT_REPOSITORY;GIT_TAG;DESTINATION"
+            "FILES;DIRECTORIES;WILDCARDS;TEXT_REPLACEMENTS"
+            ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if(NOT ARG_NAME)
-        SealLake_Error("NAME argument must be set")
+        SealLake_LogError("NAME argument must be set")
     endif()
 
     SealLake_DownloadSource(
-        NAME           "${ARG_NAME}"
-        GIT_REPOSITORY "${ARG_GIT_REPOSITORY}"
-        GIT_TAG        "${ARG_GIT_TAG}"
-        URL            "${ARG_URL}"
+            NAME           "${ARG_NAME}"
+            GIT_REPOSITORY "${ARG_GIT_REPOSITORY}"
+            GIT_TAG        "${ARG_GIT_TAG}"
+            URL            "${ARG_URL}"
     )
     set(SEAL_LAKE_SOURCE_${ARG_NAME} "${SEAL_LAKE_SOURCE_${ARG_NAME}}" PARENT_SCOPE)
 
     SealLake_ReplaceText(
-        SOURCE             "${ARG_NAME}"
-        DIRECTORIES        "."
-        TEXT_REPLACEMENTS  ${ARG_TEXT_REPLACEMENTS}
+            SOURCE             "${ARG_NAME}"
+            DIRECTORIES        "."
+            TEXT_REPLACEMENTS  ${ARG_TEXT_REPLACEMENTS}
     )
     if (NOT ARG_SKIP_LOAD)
         SealLake_Load("${ARG_NAME}" TARGET_NAME "${ARG_NAME}")
     endif()
     SealLake_Copy(
-        SOURCE      "${ARG_NAME}"
-        FILES        ${ARG_FILES}
-        DIRECTORIES  ${ARG_DIRECTORIES}
-        WILDCARDS    ${ARG_WILDCARDS}
-        DESTINATION "${ARG_DESTINATION}"
+            SOURCE      "${ARG_NAME}"
+            FILES        ${ARG_FILES}
+            DIRECTORIES  ${ARG_DIRECTORIES}
+            WILDCARDS    ${ARG_WILDCARDS}
+            DESTINATION "${ARG_DESTINATION}"
     )
 endfunction()
 
 function(SealLake_Copy)
     cmake_parse_arguments(
-        ARG
-        ""
-        "SOURCE;SOURCE_PATH;DESTINATION"
-        "FILES;DIRECTORIES;WILDCARDS"
-        ${ARGN}
+            ARG
+            ""
+            "SOURCE;SOURCE_PATH;DESTINATION"
+            "FILES;DIRECTORIES;WILDCARDS"
+            ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if (ARG_SOURCE AND ARG_SOURCE_PATH)
-        SealLake_Error("ARG_SOURCE and ARG_SOURCE_PATH arguments can't be specified simultaneously")
+        SealLake_LogError("ARG_SOURCE and ARG_SOURCE_PATH arguments can't be specified simultaneously")
     endif()
     if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${ARG_SOURCE}")
-        SealLake_Error("Project source '${ARG_SOURCE}' doesn't exist, use DownloadSource() function to create a project source.")
+        SealLake_LogError("Project source '${ARG_SOURCE}' doesn't exist, use DownloadSource() function to create a project source.")
     endif()
 
     if (ARG_SOURCE)
@@ -534,20 +512,20 @@ endfunction()
 
 function(SealLake_ReplaceText)
     cmake_parse_arguments(
-        ARG
-        ""
-        "SOURCE;SOURCE_PATH"
-        "FILES;DIRECTORIES;WILDCARDS;TEXT_REPLACEMENTS"
-        ${ARGN}
+            ARG
+            ""
+            "SOURCE;SOURCE_PATH"
+            "FILES;DIRECTORIES;WILDCARDS;TEXT_REPLACEMENTS"
+            ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if (ARG_SOURCE AND ARG_SOURCE_PATH)
-        SealLake_Error("ARG_SOURCE and ARG_SOURCE_PATH arguments can't be specified simultaneously")
+        SealLake_LogError("ARG_SOURCE and ARG_SOURCE_PATH arguments can't be specified simultaneously")
     endif()
     if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${ARG_SOURCE}")
-        SealLake_Error("Project source '${ARG_SOURCE}' doesn't exist, use DownloadSource() function to create a project source.")
+        SealLake_LogError("Project source '${ARG_SOURCE}' doesn't exist, use DownloadSource() function to create a project source.")
     endif()
 
     if (ARG_SOURCE)
@@ -591,23 +569,22 @@ endfunction()
 
 function(SealLake_DownloadSource)
     cmake_parse_arguments(
-        ARG
-        ""
-        "NAME;URL;GIT_REPOSITORY;GIT_TAG"
-        ""
-        ${ARGN}
+            ARG
+            ""
+            "NAME;URL;GIT_REPOSITORY;GIT_TAG"
+            ""
+            ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if(NOT ARG_NAME)
-        SealLake_Error("NAME argument must be set")
+        SealLake_LogError("NAME argument must be set")
     endif()
 
-    include(FetchContent)
     if (ARG_URL)
         SealLake_StringAfterLast(${ARG_URL} "/" URL_NAME)
-        SealLake_Info("Download ${URL_NAME}")
+        SealLake_LogInfo("Download ${URL_NAME}")
         string(TOLOWER ${URL_NAME} URL_NAME)
         set(DOWNLOAD_TARGET "${URL_NAME}")
 
@@ -617,50 +594,48 @@ function(SealLake_DownloadSource)
         else()
             set(NO_EXTRACT OFF)
         endif()
-        FetchContent_Declare(
-            ${DOWNLOAD_TARGET}
-            DOWNLOAD_NO_EXTRACT ${NO_EXTRACT}
+
+        CPMAddPackage(
+            NAME ${DOWNLOAD_TARGET}
             URL ${ARG_URL}
+            DOWNLOAD_ONLY TRUE
         )
     else()
         SealLake_StringAfterLast(${ARG_GIT_REPOSITORY} "/" GIT_REPOSITORY_NAME)
-        SealLake_Info("Download ${GIT_REPOSITORY_NAME}")
+        SealLake_LogInfo("Download ${GIT_REPOSITORY_NAME}")
         string(TOLOWER ${GIT_REPOSITORY_NAME} GIT_REPOSITORY_NAME)
         set(DOWNLOAD_TARGET "${GIT_REPOSITORY_NAME}_${ARG_GIT_TAG}")
-        FetchContent_Declare(
-            ${DOWNLOAD_TARGET}
+
+        CPMAddPackage(
+            NAME ${DOWNLOAD_TARGET}
             GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
             GIT_TAG        ${ARG_GIT_TAG}
             GIT_SHALLOW    ON
             GIT_PROGRESS TRUE
+            DOWNLOAD_ONLY TRUE
         )
     endif()
-    FetchContent_GetProperties(${DOWNLOAD_TARGET})
-    if(NOT ${DOWNLOAD_TARGET}_POPULATED)
-        FetchContent_Populate(${DOWNLOAD_TARGET})
-    endif()
-
     SealLake_Copy(
-        SOURCE_PATH ${${DOWNLOAD_TARGET}_SOURCE_DIR}
-        DIRECTORIES .
-        DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}"
+            SOURCE_PATH ${${DOWNLOAD_TARGET}_SOURCE_DIR}
+            DIRECTORIES .
+            DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}"
     )
     set(SEAL_LAKE_SOURCE_${ARG_NAME} "${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}" PARENT_SCOPE)
 endfunction()
 
 function(SealLake_Load SOURCE)
     cmake_parse_arguments(
-        ARG
-        ""
-        "TARGET_NAME"
-        ""
-        ${ARGN}
+            ARG
+            ""
+            "TARGET_NAME"
+            ""
+            ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${SOURCE}")
-        SealLake_Error("Project source '${SOURCE}' doesn't exist, use DownloadSource() function to create a project source.")
+        SealLake_LogError("Project source '${SOURCE}' doesn't exist, use DownloadSource() function to create a project source.")
     endif()
 
     if (EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${SOURCE}/CMakeLists.txt)
@@ -670,10 +645,6 @@ function(SealLake_Load SOURCE)
         set(SEAL_LAKE_TARGET ${CURRENT_TARGET})
         set(SEAL_LAKE_TARGET ${CURRENT_TARGET} PARENT_SCOPE)
     endif()
-
-    set(${VARNAME}_POPULATED "${${VARNAME}_POPULATED}" PARENT_SCOPE)
-    set(${VARNAME}_SOURCE_DIR "${${VARNAME}_SOURCE_DIR}" PARENT_SCOPE)
-    set(${VARNAME}_BINARY_DIR "${${VARNAME}_BINARY_DIR}" PARENT_SCOPE)
 endfunction()
 
 
@@ -697,17 +668,17 @@ function (SealLake_StringAfterLast STR VALUE RESULT)
     set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
 endfunction()
 
-macro (SealLake_Info MSG)
+macro (SealLake_LogInfo MSG)
     _SealLakeImpl_TargetName(_SealLakeImpl_TARGET)
     message("[${_SealLakeImpl_TARGET}] ${MSG}")
 endmacro()
 
-macro (SealLake_Warning MSG)
+macro (SealLake_LogWarning MSG)
     _SealLakeImpl_TargetName(_SealLakeImpl_TARGET)
     message(WARNING "[${_SealLakeImpl_TARGET}] ${CMAKE_CURRENT_FUNCTION}(): ${MSG}")
 endmacro()
 
-macro (SealLake_Error MSG)
+macro (SealLake_LogError MSG)
     _SealLakeImpl_TargetName(_SealLakeImpl_TARGET)
     message(FATAL_ERROR "[${_SealLakeImpl_TARGET}] ${CMAKE_CURRENT_FUNCTION}(): ${MSG}")
 endmacro()
@@ -738,36 +709,36 @@ macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
         add_library("${SEAL_LAKE_TARGET}::${SEAL_LAKE_TARGET}" ALIAS ${SEAL_LAKE_TARGET})
     endif()
     target_include_directories(
-        ${SEAL_LAKE_TARGET}
-        ${LIBRARY_SCOPE}
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+            ${SEAL_LAKE_TARGET}
+            ${LIBRARY_SCOPE}
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
 
-    SealLake_Properties(${ARG_PROPERTIES})
+    SealLake_AddProperties(${ARG_PROPERTIES})
     if (ARG_PUBLIC_HEADERS)
         set_target_properties(${SEAL_LAKE_TARGET} PROPERTIES PUBLIC_HEADER "${ARG_PUBLIC_HEADERS}")
     endif()
-    SealLake_CompileFeatures(${ARG_COMPILE_FEATURES})
+    SealLake_AddCompileFeatures(${ARG_COMPILE_FEATURES})
 
     if (ARG_INCLUDES)
-        SealLake_Includes(${ARG_INCLUDES})
+        SealLake_AddIncludes(${ARG_INCLUDES})
     endif()
     if (ARG_BUILD_STAGE_INCLUDES)
-        SealLake_BuildStageIncludes(${ARG_BUILD_STAGE_INCLUDES})
+        SealLake_AddBuildStageIncludes(${ARG_BUILD_STAGE_INCLUDES})
     endif()
     if (ARG_INTERFACE_INCLUDES)
-        SealLake_InterfaceIncludes(${ARG_INTERFACE_INCLUDES})
+        SealLake_AddInterfaceIncludes(${ARG_INTERFACE_INCLUDES})
     endif()
 
     if (ARG_LIBRARIES)
-        SealLake_Libraries(${ARG_LIBRARIES})
+        SealLake_AddLibraries(${ARG_LIBRARIES})
     endif()
     if (ARG_BUILD_STAGE_LIBRARIES)
-        SealLake_BuildStageLibraries(${ARG_BUILD_STAGE_LIBRARIES})
+        SealLake_AddBuildStageLibraries(${ARG_BUILD_STAGE_LIBRARIES})
     endif()
     if (ARG_INTERFACE_LIBRARIES)
-        SealLake_InterfaceLibraries(${ARG_INTERFACE_LIBRARIES})
+        SealLake_AddInterfaceLibraries(${ARG_INTERFACE_LIBRARIES})
     endif()
 
     SealLake_IsStandalone(IS_STANDALONE)
@@ -782,8 +753,8 @@ macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
         if (IS_STANDALONE OR INSTALL_${TARGET})
             if(ARG_INSTALL_BUILD_RESULT)
                 install(TARGETS ${SEAL_LAKE_TARGET}
-                    ${ARG_INSTALL_BUILD_RESULT} DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-                    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${SEAL_LAKE_TARGET}"
+                        ${ARG_INSTALL_BUILD_RESULT} DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+                        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${SEAL_LAKE_TARGET}"
                 )
                 if (NOT ARG_PUBLIC_HEADERS)
                     if (EXISTS "${PROJECT_SOURCE_DIR}/include/${SEAL_LAKE_TARGET}")
@@ -794,9 +765,9 @@ macro(_SealLakeImpl_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
                 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${SEAL_LAKE_TARGET} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
             endif()
             SealLake_InstallPackage(
-                COMPATIBILITY SameMajorVersion
-                NAMESPACE ${ARG_NAMESPACE}
-                DEPENDENCIES ${DEPENDENCIES}
+                    COMPATIBILITY SameMajorVersion
+                    NAMESPACE ${ARG_NAMESPACE}
+                    DEPENDENCIES ${DEPENDENCIES}
             )
         endif()
     endif()
@@ -804,14 +775,14 @@ endmacro()
 
 function (_SealLakeImpl_CreatePackageConfig)
     cmake_parse_arguments(
-        ARG
-        ""
-        ""
-        "DEPENDENCIES"
-        ${ARGN}
+            ARG
+            ""
+            ""
+            "DEPENDENCIES"
+            ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_Error("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
 
     include(CMakePackageConfigHelpers)
@@ -842,9 +813,9 @@ function (_SealLakeImpl_CreatePackageConfig)
 
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}Config.cmake.in" ${RESULT})
     configure_package_config_file("${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}Config.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}Config.cmake"
-        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${SEAL_LAKE_TARGET}"
-        )
+            "${CMAKE_CURRENT_BINARY_DIR}/${SEAL_LAKE_TARGET}Config.cmake"
+            INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${SEAL_LAKE_TARGET}"
+    )
 endfunction()
 
 function(_SealLakeImpl_ReplaceText FILE)
@@ -897,7 +868,7 @@ macro(_SealLakeImpl_UpdateTarget NAME)
         endif()
     endif()
     if (NOT SEAL_LAKE_TARGET)
-        SealLake_Error("Pass NAME argument or set project() before using this function")
+        SealLake_LogError("Pass NAME argument or set project() before using this function")
     endif()
 endmacro()
 
