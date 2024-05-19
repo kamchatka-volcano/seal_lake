@@ -324,7 +324,7 @@ function(SealLake_IsStandalone IS_STANDALONE)
     endif()
 endfunction()
 
-function(SealLake_IsInstallRequired RESULT)
+function(SealLake_IsInstallEnabled RESULT)
     SealLake_IsStandalone(IS_STANDALONE)
     _SealLakeImpl_TargetName(TARGET)
     string(TOUPPER ${TARGET} TARGET_NAME)
