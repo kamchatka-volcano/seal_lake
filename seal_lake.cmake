@@ -596,9 +596,10 @@ function(SealLake_DownloadSource)
         endif()
 
         CPMAddPackage(
-            NAME ${DOWNLOAD_TARGET}
-            URL ${ARG_URL}
-            DOWNLOAD_ONLY TRUE
+                NAME ${DOWNLOAD_TARGET}
+                URL ${ARG_URL}
+                DOWNLOAD_ONLY TRUE
+                DOWNLOAD_NO_EXTRACT ${NO_EXTRACT}
         )
     else()
         SealLake_StringAfterLast(${ARG_GIT_REPOSITORY} "/" GIT_REPOSITORY_NAME)
@@ -607,12 +608,12 @@ function(SealLake_DownloadSource)
         set(DOWNLOAD_TARGET "${GIT_REPOSITORY_NAME}_${ARG_GIT_TAG}")
 
         CPMAddPackage(
-            NAME ${DOWNLOAD_TARGET}
-            GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
-            GIT_TAG        ${ARG_GIT_TAG}
-            GIT_SHALLOW    ON
-            GIT_PROGRESS TRUE
-            DOWNLOAD_ONLY TRUE
+                NAME ${DOWNLOAD_TARGET}
+                GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
+                GIT_TAG        ${ARG_GIT_TAG}
+                GIT_SHALLOW    ON
+                GIT_PROGRESS TRUE
+                DOWNLOAD_ONLY TRUE
         )
     endif()
     SealLake_Copy(
