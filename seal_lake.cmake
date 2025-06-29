@@ -467,6 +467,9 @@ function(SealLake_v030_Copy)
     if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${ARG_SOURCE}")
         SealLake_v030_LogError("Project source '${ARG_SOURCE}' doesn't exist, use DownloadSource() function to create a project source.")
     endif()
+    if(NOT ARG_FILES AND NOT ARG_DIRECTORIES AND NOT ARG_WILDCARDS AND ARG_DESTINATION AND (ARG_SOURCE_PATH OR ARG_SOURCE))
+        set(ARG_DIRECTORIES ".")
+    endif()
 
     if (ARG_SOURCE)
         set(ARG_SOURCE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${ARG_SOURCE}")
@@ -531,6 +534,9 @@ function(SealLake_v030_ReplaceText)
     endif()
     if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${ARG_SOURCE}")
         SealLake_v030_LogError("Project source '${ARG_SOURCE}' doesn't exist, use DownloadSource() function to create a project source.")
+    endif()
+    if(NOT ARG_FILES AND NOT ARG_DIRECTORIES AND NOT ARG_WILDCARDS AND (ARG_SOURCE_PATH OR ARG_SOURCE))
+        set(ARG_DIRECTORIES ".")
     endif()
 
     if (ARG_SOURCE)
@@ -653,6 +659,28 @@ function(SealLake_v030_Load SOURCE)
     endif()
 endfunction()
 
+function(SealLake_v030_LoadDirectory DIR)
+    cmake_parse_arguments(
+            ARG
+            ""
+            "TARGET_NAME"
+            ""
+            ${ARGN}
+    )
+    if (ARG_UNPARSED_ARGUMENTS)
+        SealLake_v030_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+    SealLake_v030_StringAfterLast(${DIR} / DIRNAME)
+    if (NOT ARG_TARGET_NAME)
+        set(ARG_TARGET_NAME "${DIRNAME}")
+    endif()
+
+    set(CURRENT_TARGET ${SEAL_LAKE_TARGET})
+    set(SEAL_LAKE_TARGET ${ARG_TARGET_NAME}) #it's fine if ARG_TARGET_NAME is empty
+    add_subdirectory("${DIR}")
+    set(SEAL_LAKE_TARGET ${CURRENT_TARGET})
+    set(SEAL_LAKE_TARGET ${CURRENT_TARGET} PARENT_SCOPE)
+endfunction()
 
 function (SealLake_v030_StringBeforeLast STR VALUE RESULT)
     _SealLakeImpl_StringBefore(${STR} ${VALUE} RESULT_VALUE REVERSE)
