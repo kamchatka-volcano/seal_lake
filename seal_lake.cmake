@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-set(SEAL_LAKE_VERSION "0.3.0")
+set(SEAL_LAKE_VERSION "0.4.0")
 set(SEAL_LAKE_LIB_TYPE "")
 set(SEAL_LAKE_DEFAULT_SCOPE "")
 set(SEAL_LAKE_DEPENDENCIES "")
@@ -9,7 +9,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/CPM.cmake)
 include(CTest)
 include(GNUInstallDirs)
 
-function(SealLake_v030_HeaderOnlyLibrary)
+function(SealLake_v040_HeaderOnlyLibrary)
     cmake_parse_arguments(
             ARG
             ""
@@ -18,13 +18,13 @@ function(SealLake_v030_HeaderOnlyLibrary)
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_v030_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_v040_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
-    SealLakeImpl_v030_UpdateTarget("${ARG_NAME}")
-    SealLakeImpl_v030_Library(INTERFACE INTERFACE "")
+    SealLakeImpl_v040_UpdateTarget("${ARG_NAME}")
+    SealLakeImpl_v040_Library(INTERFACE INTERFACE "")
 endfunction()
 
-function(SealLake_v030_ObjectLibrary)
+function(SealLake_v040_ObjectLibrary)
     cmake_parse_arguments(
             ARG
             ""
@@ -33,13 +33,13 @@ function(SealLake_v030_ObjectLibrary)
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_v030_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_v040_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
-    SealLakeImpl_v030_UpdateTarget("${ARG_NAME}")
-    SealLakeImpl_v030_Library(OBJECT PUBLIC ARCHIVE)
+    SealLakeImpl_v040_UpdateTarget("${ARG_NAME}")
+    SealLakeImpl_v040_Library(OBJECT PUBLIC ARCHIVE)
 endfunction()
 
-function(SealLake_v030_StaticLibrary)
+function(SealLake_v040_StaticLibrary)
     cmake_parse_arguments(
             ARG
             ""
@@ -48,20 +48,20 @@ function(SealLake_v030_StaticLibrary)
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_v030_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_v040_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
-    SealLakeImpl_v030_UpdateTarget("${ARG_NAME}")
+    SealLakeImpl_v040_UpdateTarget("${ARG_NAME}")
     string(TOUPPER ${SEAL_LAKE_TARGET} VARNAME)
     set(${${VARNAME}_OBJECT_LIB} "Build ${SEAL_LAKE_TARGET} as object library" OFF PARENT_SCOPE)
 
     if (${VARNAME}_OBJECT_LIB)
-        SealLakeImpl_v030_Library(OBJECT PUBLIC ARCHIVE)
+        SealLakeImpl_v040_Library(OBJECT PUBLIC ARCHIVE)
     else()
-        SealLakeImpl_v030_Library(STATIC PUBLIC ARCHIVE)
+        SealLakeImpl_v040_Library(STATIC PUBLIC ARCHIVE)
     endif()
 endfunction()
 
-function(SealLake_v030_SharedLibrary)
+function(SealLake_v040_SharedLibrary)
     cmake_parse_arguments(
             ARG
             ""
@@ -70,13 +70,13 @@ function(SealLake_v030_SharedLibrary)
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_v030_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_v040_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
-    SealLakeImpl_v030_UpdateTarget("${ARG_NAME}")
-    SealLakeImpl_v030_Library(SHARED PUBLIC LIBRARY)
+    SealLakeImpl_v040_UpdateTarget("${ARG_NAME}")
+    SealLakeImpl_v040_Library(SHARED PUBLIC LIBRARY)
 endfunction()
 
-function(SealLake_v030_Executable)
+function(SealLake_v040_Executable)
     cmake_parse_arguments(
             ARG
             ""
@@ -85,9 +85,9 @@ function(SealLake_v030_Executable)
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_v030_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_v040_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
-    SealLakeImpl_v030_UpdateTarget("${ARG_NAME}")
+    SealLakeImpl_v040_UpdateTarget("${ARG_NAME}")
     set(SEAL_LAKE_LIB_TYPE "")
     set(SEAL_LAKE_LIB_TYPE "" PARENT_SCOPE)
     set(SEAL_LAKE_DEFAULT_SCOPE PRIVATE PARENT_SCOPE)
@@ -100,10 +100,10 @@ function(SealLake_v030_Executable)
 
     add_executable(${SEAL_LAKE_TARGET} ${ARG_SOURCES})
     target_include_directories(${SEAL_LAKE_TARGET} PRIVATE ${ARG_INCLUDES})
-    SealLake_v030_AddProperties(${ARG_PROPERTIES})
-    SealLake_v030_AddCompileFeatures(${ARG_COMPILE_FEATURES})
-    SealLake_v030_AddLibraries(${ARG_LIBRARIES})
-    SealLake_v030_IsStandalone(IS_STANDALONE)
+    SealLake_v040_AddProperties(${ARG_PROPERTIES})
+    SealLake_v040_AddCompileFeatures(${ARG_COMPILE_FEATURES})
+    SealLake_v040_AddLibraries(${ARG_LIBRARIES})
+    SealLake_v040_IsStandalone(IS_STANDALONE)
     string(TOUPPER ${SEAL_LAKE_TARGET} VARNAME)
     set(${INSTALL_${VARNAME}} "Install ${SEAL_LAKE_TARGET}" OFF PARENT_SCOPE)
     if (IS_STANDALONE OR INSTALL_${VARNAME})
@@ -111,7 +111,7 @@ function(SealLake_v030_Executable)
     endif()
 endfunction()
 
-function (SealLake_v030_GoogleTest)
+function (SealLake_v040_GoogleTest)
     cmake_parse_arguments(
             ARG
             "SKIP_FETCHING"
@@ -120,9 +120,9 @@ function (SealLake_v030_GoogleTest)
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_v030_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_v040_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
-    SealLakeImpl_v030_UpdateTarget("${ARG_NAME}")
+    SealLakeImpl_v040_UpdateTarget("${ARG_NAME}")
     set(SEAL_LAKE_LIB_TYPE "")
     set(SEAL_LAKE_LIB_TYPE "" PARENT_SCOPE)
     set(SEAL_LAKE_DEFAULT_SCOPE PRIVATE PARENT_SCOPE)
@@ -131,7 +131,7 @@ function (SealLake_v030_GoogleTest)
     if (NOT ARG_SKIP_FETCHING)
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
         set(INSTALL_GTEST OFF)
-        SealLake_v030_Import(googletest 1.12.1
+        SealLake_v040_Import(googletest 1.12.1
                 GIT_REPOSITORY https://github.com/google/googletest.git
                 GIT_TAG release-1.12.1
         )
@@ -142,40 +142,40 @@ function (SealLake_v030_GoogleTest)
     include(GoogleTest)
     add_executable(${SEAL_LAKE_TARGET} ${ARG_SOURCES})
     target_include_directories(${SEAL_LAKE_TARGET} PRIVATE ${ARG_INCLUDES})
-    SealLake_v030_AddProperties(${ARG_PROPERTIES})
-    SealLake_v030_AddCompileFeatures(${ARG_COMPILE_FEATURES})
-    SealLake_v030_AddLibraries(${ARG_LIBRARIES} Threads::Threads GTest::gtest_main GTest::gmock_main)
+    SealLake_v040_AddProperties(${ARG_PROPERTIES})
+    SealLake_v040_AddCompileFeatures(${ARG_COMPILE_FEATURES})
+    SealLake_v040_AddLibraries(${ARG_LIBRARIES} Threads::Threads GTest::gtest_main GTest::gmock_main)
     gtest_discover_tests(${SEAL_LAKE_TARGET})
 endfunction()
 
-function (SealLake_v030_AddProperties)
+function (SealLake_v040_AddProperties)
     if (ARGN)
         set_target_properties(${SEAL_LAKE_TARGET} PROPERTIES ${ARGN})
     endif()
 endfunction()
 
-function (SealLake_v030_AddCompileFeatures)
+function (SealLake_v040_AddCompileFeatures)
     foreach(FEATURE IN ITEMS ${ARGN})
         target_compile_features(${SEAL_LAKE_TARGET} ${SEAL_LAKE_DEFAULT_SCOPE} ${FEATURE})
     endforeach()
 endfunction()
 
-function (SealLake_v030_AddIncludes)
+function (SealLake_v040_AddIncludes)
     if (SEAL_LAKE_LIB_TYPE STREQUAL INTERFACE)
-        SealLake_v030_AddInterfaceIncludes(${ARGN})
+        SealLake_v040_AddInterfaceIncludes(${ARGN})
     else()
-        SealLake_v030_AddBuildStageIncludes(${ARGN})
+        SealLake_v040_AddBuildStageIncludes(${ARGN})
     endif()
 endfunction()
 
-function(SealLake_v030_AddBuildStageIncludes)
+function(SealLake_v040_AddBuildStageIncludes)
     foreach (PATH IN ITEMS ${ARGN})
         if (IS_ABSOLUTE ${PATH})
             set(RESULT_PATH ${PATH})
         else()
             set(RESULT_PATH ${PROJECT_SOURCE_DIR}/include/${PATH})
         endif()
-        SealLake_v030_LogInfo("Add build stage include path: ${RESULT_PATH}")
+        SealLake_v040_LogInfo("Add build stage include path: ${RESULT_PATH}")
         target_include_directories(
                 ${SEAL_LAKE_TARGET}
                 ${SEAL_LAKE_DEFAULT_SCOPE}
@@ -184,14 +184,14 @@ function(SealLake_v030_AddBuildStageIncludes)
     endforeach()
 endfunction()
 
-function (SealLake_v030_AddInterfaceIncludes)
+function (SealLake_v040_AddInterfaceIncludes)
     foreach (PATH IN ITEMS ${ARGN})
         if (IS_ABSOLUTE ${PATH})
             set(RESULT_PATH ${PATH})
         else()
             set(RESULT_PATH ${CMAKE_INSTALL_INCLUDEDIR}/${PATH})
         endif()
-        SealLake_v030_LogInfo("Add interface include path: ${RESULT_PATH}")
+        SealLake_v040_LogInfo("Add interface include path: ${RESULT_PATH}")
         target_include_directories(
                 ${SEAL_LAKE_TARGET}
                 ${SEAL_LAKE_DEFAULT_SCOPE}
@@ -200,29 +200,29 @@ function (SealLake_v030_AddInterfaceIncludes)
     endforeach()
 endfunction()
 
-function (SealLake_v030_AddLibraries)
+function (SealLake_v040_AddLibraries)
     if (SEAL_LAKE_LIB_TYPE STREQUAL INTERFACE)
-        SealLake_v030_AddInterfaceLibraries(${ARGN})
+        SealLake_v040_AddInterfaceLibraries(${ARGN})
     else()
-        SealLake_v030_AddBuildStageLibraries(${ARGN})
+        SealLake_v040_AddBuildStageLibraries(${ARGN})
     endif()
 endfunction()
 
-function (SealLake_v030_AddInterfaceLibraries)
+function (SealLake_v040_AddInterfaceLibraries)
     foreach (LIB IN ITEMS ${ARGN})
-        SealLake_v030_LogInfo("Link library ${LIB}")
+        SealLake_v040_LogInfo("Link library ${LIB}")
         target_link_libraries(${SEAL_LAKE_TARGET} ${SEAL_LAKE_DEFAULT_SCOPE} ${LIB})
     endforeach()
 endfunction()
 
-function (SealLake_v030_AddBuildStageLibraries)
+function (SealLake_v040_AddBuildStageLibraries)
     if (SEAL_LAKE_LIB_TYPE STREQUAL INTERFACE)
-        SealLake_v030_LogWarning("Header only libraries don't have a build stage to establish a build link dependency")
+        SealLake_v040_LogWarning("Header only libraries don't have a build stage to establish a build link dependency")
         return()
     endif()
 
     foreach (LIB IN ITEMS ${ARGN})
-        SealLake_v030_LogInfo("Link library ${LIB}")
+        SealLake_v040_LogInfo("Link library ${LIB}")
         if (SEAL_LAKE_LIB_TYPE STREQUAL STATIC OR SEAL_LAKE_LIB_TYPE STREQUAL OBJECT)
             target_link_libraries(${SEAL_LAKE_TARGET} PRIVATE "$<BUILD_INTERFACE:${LIB}>")
         else()
@@ -231,14 +231,14 @@ function (SealLake_v030_AddBuildStageLibraries)
     endforeach()
 endfunction()
 
-function (SealLake_v030_AddDependencies)
+function (SealLake_v040_AddDependencies)
     list(APPEND DEPENDENCIES ${SEAL_LAKE_DEPENDENCIES})
     list(APPEND DEPENDENCIES ${ARGN})
     set(SEAL_LAKE_DEPENDENCIES ${DEPENDENCIES} PARENT_SCOPE)
     _SealLakeImpl_CreatePackageConfig(DEPENDENCIES ${DEPENDENCIES})
 endfunction()
 
-function (SealLake_v030_OptionalSubProjects)
+function (SealLake_v040_OptionalSubProjects)
     cmake_parse_arguments(
             ARG
             ""
@@ -246,50 +246,50 @@ function (SealLake_v030_OptionalSubProjects)
             "IF_ENABLED;IF_ENABLED_AND_STANDALONE;IF_ENABLED_OR_STANDALONE"
             ${ARGN}
     )
-    macro(SealLakeImpl_v030_OptionalSubProjectsAddDirectory)
-        SealLake_v030_LogInfo("Add build step ${DIR}")
+    macro(SealLakeImpl_v040_OptionalSubProjectsAddDirectory)
+        SealLake_v040_LogInfo("Add build step ${DIR}")
         set(CURRENT_TARGET ${SEAL_LAKE_TARGET})
         set(SEAL_LAKE_TARGET "")
         add_subdirectory(${DIR})
         set(SEAL_LAKE_TARGET "${CURRENT_TARGET}")
         set(SEAL_LAKE_TARGET "${CURRENT_TARGET}" PARENT_SCOPE)
     endmacro()
-    macro (SealLakeImpl_v030_ProcessOptionalSubProjects SUB_PROJECTS MODE)
-        SealLake_v030_IsStandalone(IS_STANDALONE)
+    macro (SealLakeImpl_v040_ProcessOptionalSubProjects SUB_PROJECTS MODE)
+        SealLake_v040_IsStandalone(IS_STANDALONE)
         foreach (DIR IN ITEMS ${SUB_PROJECTS})
-            SealLake_v030_StringAfterLast(${DIR} / DIRNAME)
+            SealLake_v040_StringAfterLast(${DIR} / DIRNAME)
             string(TOUPPER ${DIRNAME} VAR_DIRNAME)
             set(ENABLE_${VAR_DIRNAME} "Enable ${DIRNAME}" OFF PARENT_SCOPE)
             if (${MODE} STREQUAL IF_ENABLED)
                 if (ENABLE_${VAR_DIRNAME})
-                    SealLakeImpl_v030_OptionalSubProjectsAddDirectory()
+                    SealLakeImpl_v040_OptionalSubProjectsAddDirectory()
                 endif()
             elseif(${MODE} STREQUAL IF_ENABLED_AND_STANDALONE)
                 if (ENABLE_${VAR_DIRNAME} AND IS_STANDALONE)
-                    SealLakeImpl_v030_OptionalSubProjectsAddDirectory()
+                    SealLakeImpl_v040_OptionalSubProjectsAddDirectory()
                 endif()
             elseif(${MODE} STREQUAL IF_ENABLED_OR_STANDALONE)
                 if (ENABLE_${VAR_DIRNAME} OR IS_STANDALONE)
-                    SealLakeImpl_v030_OptionalSubProjectsAddDirectory()
+                    SealLakeImpl_v040_OptionalSubProjectsAddDirectory()
                 endif()
             endif()
         endforeach()
     endmacro()
     if (ARG_IF_ENABLED)
-        SealLakeImpl_v030_ProcessOptionalSubProjects("${ARG_IF_ENABLED}" IF_ENABLED)
+        SealLakeImpl_v040_ProcessOptionalSubProjects("${ARG_IF_ENABLED}" IF_ENABLED)
     endif()
     if (ARG_IF_ENABLED_AND_STANDALONE)
-        SealLakeImpl_v030_ProcessOptionalSubProjects("${ARG_IF_ENABLED_AND_STANDALONE}" IF_ENABLED_AND_STANDALONE)
+        SealLakeImpl_v040_ProcessOptionalSubProjects("${ARG_IF_ENABLED_AND_STANDALONE}" IF_ENABLED_AND_STANDALONE)
     endif()
     if(ARG_UNPARSED_ARGUMENTS)
-        SealLakeImpl_v030_ProcessOptionalSubProjects("${ARG_UNPARSED_ARGUMENTS}" IF_ENABLED_AND_STANDALONE)
+        SealLakeImpl_v040_ProcessOptionalSubProjects("${ARG_UNPARSED_ARGUMENTS}" IF_ENABLED_AND_STANDALONE)
     endif()
     if (ARG_IF_ENABLED_OR_STANDALONE)
-        SealLakeImpl_v030_ProcessOptionalSubProjects("${ARG_IF_ENABLED_OR_STANDALONE}" IF_ENABLED_OR_STANDALONE)
+        SealLakeImpl_v040_ProcessOptionalSubProjects("${ARG_IF_ENABLED_OR_STANDALONE}" IF_ENABLED_OR_STANDALONE)
     endif()
 endfunction()
 
-function (SealLake_v030_Install)
+function (SealLake_v040_Install)
     cmake_parse_arguments(
             ARG
             ""
@@ -298,7 +298,7 @@ function (SealLake_v030_Install)
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_v030_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_v040_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if(ARG_DESTINATION)
         if (IS_ABSOLUTE ${ARG_DESTINATION})
@@ -317,7 +317,7 @@ function (SealLake_v030_Install)
     endif()
 endfunction()
 
-function(SealLake_v030_IsStandalone IS_STANDALONE)
+function(SealLake_v040_IsStandalone IS_STANDALONE)
     if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
         set(${IS_STANDALONE} ON PARENT_SCOPE)
     else()
@@ -325,8 +325,8 @@ function(SealLake_v030_IsStandalone IS_STANDALONE)
     endif()
 endfunction()
 
-function(SealLake_v030_IsInstallEnabled RESULT)
-    SealLake_v030_IsStandalone(IS_STANDALONE)
+function(SealLake_v040_IsInstallEnabled RESULT)
+    SealLake_v040_IsStandalone(IS_STANDALONE)
     _SealLakeImpl_TargetName(TARGET)
     string(TOUPPER ${TARGET} TARGET_NAME)
     if (IS_STANDALONE OR INSTALL_${TARGET_NAME})
@@ -336,7 +336,7 @@ function(SealLake_v030_IsInstallEnabled RESULT)
     endif()
 endfunction()
 
-function(SealLake_v030_InstallPackage)
+function(SealLake_v040_InstallPackage)
     cmake_parse_arguments(
             ARG
             ""
@@ -345,10 +345,10 @@ function(SealLake_v030_InstallPackage)
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_v030_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_v040_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if(NOT ARG_COMPATIBILITY)
-        SealLake_v030_LogError("COMPATIBILITY argument must be set")
+        SealLake_v040_LogError("COMPATIBILITY argument must be set")
     endif()
     set(PACK_PATH "${CMAKE_INSTALL_LIBDIR}/cmake/${SEAL_LAKE_TARGET}")
 
@@ -383,7 +383,7 @@ function(SealLake_v030_InstallPackage)
     )
 endfunction()
 
-function (SealLake_v030_Import NAME VERSION)
+function (SealLake_v040_Import NAME VERSION)
     cmake_parse_arguments(
             ARG
             ""
@@ -392,10 +392,10 @@ function (SealLake_v030_Import NAME VERSION)
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_v030_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_v040_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if(NOT NAME)
-        SealLake_v030_LogError("NAME argument must be set")
+        SealLake_v040_LogError("NAME argument must be set")
     endif()
 
     set(CPM_USE_LOCAL_PACKAGES ON)
@@ -414,7 +414,7 @@ function (SealLake_v030_Import NAME VERSION)
     CPM_v0420_AddPackage(${_ADD_PACKAGE_ARGS})
 endfunction()
 
-function(SealLake_v030_Bundle)
+function(SealLake_v040_Bundle)
     cmake_parse_arguments(
             ARG
             "SKIP_LOAD"
@@ -423,10 +423,10 @@ function(SealLake_v030_Bundle)
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_v030_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_v040_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if(NOT ARG_NAME)
-        SealLake_v030_LogError("NAME argument must be set")
+        SealLake_v040_LogError("NAME argument must be set")
     endif()
 
     set(_DOWNLOAD_SOURCE_ARGS
@@ -438,19 +438,19 @@ function(SealLake_v030_Bundle)
     if(DEFINED ARG_GIT_SUBMODULES AND ARG_GIT_SUBMODULES)
         list(APPEND _DOWNLOAD_SOURCE_ARGS GIT_SUBMODULES ${ARG_GIT_SUBMODULES})
     endif()
-    SealLake_v030_DownloadSource(${_DOWNLOAD_SOURCE_ARGS})
+    SealLake_v040_DownloadSource(${_DOWNLOAD_SOURCE_ARGS})
 
     set(SEAL_LAKE_SOURCE_${ARG_NAME} "${SEAL_LAKE_SOURCE_${ARG_NAME}}" PARENT_SCOPE)
 
-    SealLake_v030_ReplaceText(
+    SealLake_v040_ReplaceText(
             SOURCE             "${ARG_NAME}"
             DIRECTORIES        "."
             TEXT_REPLACEMENTS  ${ARG_TEXT_REPLACEMENTS}
     )
     if (NOT ARG_SKIP_LOAD)
-        SealLake_v030_Load("${ARG_NAME}" TARGET_NAME "${ARG_NAME}")
+        SealLake_v040_Load("${ARG_NAME}" TARGET_NAME "${ARG_NAME}")
     endif()
-    SealLake_v030_Copy(
+    SealLake_v040_Copy(
             SOURCE      "${ARG_NAME}"
             FILES        ${ARG_FILES}
             DIRECTORIES  ${ARG_DIRECTORIES}
@@ -459,7 +459,7 @@ function(SealLake_v030_Bundle)
     )
 endfunction()
 
-function(SealLake_v030_Copy)
+function(SealLake_v040_Copy)
     cmake_parse_arguments(
             ARG
             ""
@@ -468,13 +468,13 @@ function(SealLake_v030_Copy)
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_v030_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_v040_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if (ARG_SOURCE AND ARG_SOURCE_PATH)
-        SealLake_v030_LogError("ARG_SOURCE and ARG_SOURCE_PATH arguments can't be specified simultaneously")
+        SealLake_v040_LogError("ARG_SOURCE and ARG_SOURCE_PATH arguments can't be specified simultaneously")
     endif()
     if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${ARG_SOURCE}")
-        SealLake_v030_LogError("Project source '${ARG_SOURCE}' doesn't exist, use DownloadSource() function to create a project source.")
+        SealLake_v040_LogError("Project source '${ARG_SOURCE}' doesn't exist, use DownloadSource() function to create a project source.")
     endif()
     if(NOT ARG_FILES AND NOT ARG_DIRECTORIES AND NOT ARG_WILDCARDS AND ARG_DESTINATION AND (ARG_SOURCE_PATH OR ARG_SOURCE))
         set(ARG_DIRECTORIES ".")
@@ -505,9 +505,9 @@ function(SealLake_v030_Copy)
         endif()
         file(GLOB_RECURSE FILES "${DIR}/*")
         foreach(FILE IN ITEMS ${FILES})
-            SealLake_v030_StringBeforeLast(${DIR} / DIR_PARENT)
-            SealLake_v030_StringAfterFirst(${FILE} "${DIR_PARENT}" FILEPATH)
-            SealLake_v030_StringBeforeLast(${FILEPATH} / FILEDIR)
+            SealLake_v040_StringBeforeLast(${DIR} / DIR_PARENT)
+            SealLake_v040_StringAfterFirst(${FILE} "${DIR_PARENT}" FILEPATH)
+            SealLake_v040_StringBeforeLast(${FILEPATH} / FILEDIR)
             get_filename_component(FILENAME "${FILE}" NAME)
             file(REMOVE "${ARG_DESTINATION}/${FILEDIR}/${FILENAME}")
             file(COPY "${FILE}" DESTINATION "${ARG_DESTINATION}/${FILEDIR}")
@@ -527,7 +527,7 @@ function(SealLake_v030_Copy)
     endforeach()
 endfunction()
 
-function(SealLake_v030_ReplaceText)
+function(SealLake_v040_ReplaceText)
     cmake_parse_arguments(
             ARG
             ""
@@ -536,13 +536,13 @@ function(SealLake_v030_ReplaceText)
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_v030_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_v040_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if (ARG_SOURCE AND ARG_SOURCE_PATH)
-        SealLake_v030_LogError("ARG_SOURCE and ARG_SOURCE_PATH arguments can't be specified simultaneously")
+        SealLake_v040_LogError("ARG_SOURCE and ARG_SOURCE_PATH arguments can't be specified simultaneously")
     endif()
     if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${ARG_SOURCE}")
-        SealLake_v030_LogError("Project source '${ARG_SOURCE}' doesn't exist, use DownloadSource() function to create a project source.")
+        SealLake_v040_LogError("Project source '${ARG_SOURCE}' doesn't exist, use DownloadSource() function to create a project source.")
     endif()
     if(NOT ARG_FILES AND NOT ARG_DIRECTORIES AND NOT ARG_WILDCARDS AND (ARG_SOURCE_PATH OR ARG_SOURCE))
         set(ARG_DIRECTORIES ".")
@@ -587,7 +587,7 @@ function(SealLake_v030_ReplaceText)
     endforeach()
 endfunction()
 
-function(SealLake_v030_DownloadSource)
+function(SealLake_v040_DownloadSource)
     cmake_parse_arguments(
             ARG
             ""
@@ -596,19 +596,19 @@ function(SealLake_v030_DownloadSource)
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_v030_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_v040_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if(NOT ARG_NAME)
-        SealLake_v030_LogError("NAME argument must be set")
+        SealLake_v040_LogError("NAME argument must be set")
     endif()
 
     if (ARG_URL)
-        SealLake_v030_StringAfterLast(${ARG_URL} "/" URL_NAME)
-        SealLake_v030_LogInfo("Download ${URL_NAME}")
+        SealLake_v040_StringAfterLast(${ARG_URL} "/" URL_NAME)
+        SealLake_v040_LogInfo("Download ${URL_NAME}")
         string(TOLOWER ${URL_NAME} URL_NAME)
         set(DOWNLOAD_TARGET "${URL_NAME}")
 
-        SealLake_v030_StringAfterLast(${URL_NAME} "." URL_EXT)
+        SealLake_v040_StringAfterLast(${URL_NAME} "." URL_EXT)
         if (URL_EXT STREQUAL "h" OR URL_EXT STREQUAL "hpp")
             set(NO_EXTRACT ON)
         else()
@@ -622,8 +622,8 @@ function(SealLake_v030_DownloadSource)
                 DOWNLOAD_NO_EXTRACT ${NO_EXTRACT}
         )
     else()
-        SealLake_v030_StringAfterLast(${ARG_GIT_REPOSITORY} "/" GIT_REPOSITORY_NAME)
-        SealLake_v030_LogInfo("Download ${GIT_REPOSITORY_NAME}")
+        SealLake_v040_StringAfterLast(${ARG_GIT_REPOSITORY} "/" GIT_REPOSITORY_NAME)
+        SealLake_v040_LogInfo("Download ${GIT_REPOSITORY_NAME}")
         string(TOLOWER ${GIT_REPOSITORY_NAME} GIT_REPOSITORY_NAME)
         set(DOWNLOAD_TARGET "${GIT_REPOSITORY_NAME}_${ARG_GIT_TAG}")
         set(_ADD_PACKAGE_ARGS
@@ -640,7 +640,7 @@ function(SealLake_v030_DownloadSource)
         endif()
         CPM_v0420_AddPackage(${_ADD_PACKAGE_ARGS})
     endif()
-    SealLake_v030_Copy(
+    SealLake_v040_Copy(
             SOURCE_PATH ${${DOWNLOAD_TARGET}_SOURCE_DIR}
             DIRECTORIES .
             DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}"
@@ -648,7 +648,7 @@ function(SealLake_v030_DownloadSource)
     set(SEAL_LAKE_SOURCE_${ARG_NAME} "${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}" PARENT_SCOPE)
 endfunction()
 
-function(SealLake_v030_Load SOURCE)
+function(SealLake_v040_Load SOURCE)
     cmake_parse_arguments(
             ARG
             ""
@@ -657,10 +657,10 @@ function(SealLake_v030_Load SOURCE)
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_v030_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_v040_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
     if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${SOURCE}")
-        SealLake_v030_LogError("Project source '${SOURCE}' doesn't exist, use DownloadSource() function to create a project source.")
+        SealLake_v040_LogError("Project source '${SOURCE}' doesn't exist, use DownloadSource() function to create a project source.")
     endif()
 
     if (EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${SOURCE}/CMakeLists.txt)
@@ -672,7 +672,7 @@ function(SealLake_v030_Load SOURCE)
     endif()
 endfunction()
 
-function(SealLake_v030_LoadDirectory DIR)
+function(SealLake_v040_LoadDirectory DIR)
     cmake_parse_arguments(
             ARG
             ""
@@ -681,9 +681,9 @@ function(SealLake_v030_LoadDirectory DIR)
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_v030_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_v040_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
-    SealLake_v030_StringAfterLast(${DIR} / DIRNAME)
+    SealLake_v040_StringAfterLast(${DIR} / DIRNAME)
     if (NOT ARG_TARGET_NAME)
         set(ARG_TARGET_NAME "${DIRNAME}")
     endif()
@@ -695,37 +695,37 @@ function(SealLake_v030_LoadDirectory DIR)
     set(SEAL_LAKE_TARGET ${CURRENT_TARGET} PARENT_SCOPE)
 endfunction()
 
-function (SealLake_v030_StringBeforeLast STR VALUE RESULT)
+function (SealLake_v040_StringBeforeLast STR VALUE RESULT)
     _SealLakeImpl_StringBefore(${STR} ${VALUE} RESULT_VALUE REVERSE)
     set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
 endfunction()
 
-function (SealLake_v030_StringBeforeFirst STR VALUE RESULT)
+function (SealLake_v040_StringBeforeFirst STR VALUE RESULT)
     _SealLakeImpl_StringBefore(${STR} ${VALUE} RESULT_VALUE "")
     set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
 endfunction()
 
-function (SealLake_v030_StringAfterFirst STR VALUE RESULT)
+function (SealLake_v040_StringAfterFirst STR VALUE RESULT)
     _SealLakeImpl_StringAfter(${STR} ${VALUE} RESULT_VALUE "")
     set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
 endfunction()
 
-function (SealLake_v030_StringAfterLast STR VALUE RESULT)
+function (SealLake_v040_StringAfterLast STR VALUE RESULT)
     _SealLakeImpl_StringAfter(${STR} ${VALUE} RESULT_VALUE REVERSE)
     set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
 endfunction()
 
-macro (SealLake_v030_LogInfo MSG)
+macro (SealLake_v040_LogInfo MSG)
     _SealLakeImpl_TargetName(_SealLakeImpl_TARGET)
     message("[${_SealLakeImpl_TARGET}] ${MSG}")
 endmacro()
 
-macro (SealLake_v030_LogWarning MSG)
+macro (SealLake_v040_LogWarning MSG)
     _SealLakeImpl_TargetName(_SealLakeImpl_TARGET)
     message(WARNING "[${_SealLakeImpl_TARGET}] ${CMAKE_CURRENT_FUNCTION}(): ${MSG}")
 endmacro()
 
-macro (SealLake_v030_LogError MSG)
+macro (SealLake_v040_LogError MSG)
     _SealLakeImpl_TargetName(_SealLakeImpl_TARGET)
     message(FATAL_ERROR "[${_SealLakeImpl_TARGET}] ${CMAKE_CURRENT_FUNCTION}(): ${MSG}")
 endmacro()
@@ -734,7 +734,7 @@ endmacro()
 ######################################## HERE BE IMPLEMENTATION DETAILS ################################################
 ########################################################################################################################
 
-macro(SealLakeImpl_v030_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
+macro(SealLakeImpl_v040_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
     set(SEAL_LAKE_LIB_TYPE ${LIBRARY_TYPE})
     set(SEAL_LAKE_DEFAULT_SCOPE ${LIBRARY_SCOPE})
     set(SEAL_LAKE_LIB_TYPE ${LIBRARY_TYPE} PARENT_SCOPE)
@@ -762,33 +762,33 @@ macro(SealLakeImpl_v030_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
 
-    SealLake_v030_AddProperties(${ARG_PROPERTIES})
+    SealLake_v040_AddProperties(${ARG_PROPERTIES})
     if (ARG_PUBLIC_HEADERS)
         set_target_properties(${SEAL_LAKE_TARGET} PROPERTIES PUBLIC_HEADER "${ARG_PUBLIC_HEADERS}")
     endif()
-    SealLake_v030_AddCompileFeatures(${ARG_COMPILE_FEATURES})
+    SealLake_v040_AddCompileFeatures(${ARG_COMPILE_FEATURES})
 
     if (ARG_INCLUDES)
-        SealLake_v030_AddIncludes(${ARG_INCLUDES})
+        SealLake_v040_AddIncludes(${ARG_INCLUDES})
     endif()
     if (ARG_BUILD_STAGE_INCLUDES)
-        SealLake_v030_AddBuildStageIncludes(${ARG_BUILD_STAGE_INCLUDES})
+        SealLake_v040_AddBuildStageIncludes(${ARG_BUILD_STAGE_INCLUDES})
     endif()
     if (ARG_INTERFACE_INCLUDES)
-        SealLake_v030_AddInterfaceIncludes(${ARG_INTERFACE_INCLUDES})
+        SealLake_v040_AddInterfaceIncludes(${ARG_INTERFACE_INCLUDES})
     endif()
 
     if (ARG_LIBRARIES)
-        SealLake_v030_AddLibraries(${ARG_LIBRARIES})
+        SealLake_v040_AddLibraries(${ARG_LIBRARIES})
     endif()
     if (ARG_BUILD_STAGE_LIBRARIES)
-        SealLake_v030_AddBuildStageLibraries(${ARG_BUILD_STAGE_LIBRARIES})
+        SealLake_v040_AddBuildStageLibraries(${ARG_BUILD_STAGE_LIBRARIES})
     endif()
     if (ARG_INTERFACE_LIBRARIES)
-        SealLake_v030_AddInterfaceLibraries(${ARG_INTERFACE_LIBRARIES})
+        SealLake_v040_AddInterfaceLibraries(${ARG_INTERFACE_LIBRARIES})
     endif()
 
-    SealLake_v030_IsStandalone(IS_STANDALONE)
+    SealLake_v040_IsStandalone(IS_STANDALONE)
     string(TOUPPER ${SEAL_LAKE_TARGET} TARGET)
     set(${INSTALL_${TARGET}} "Install ${SEAL_LAKE_TARGET}" OFF PARENT_SCOPE)
     if (SEAL_LAKE_LIB_TYPE STREQUAL "SHARED")
@@ -811,7 +811,7 @@ macro(SealLakeImpl_v030_Library LIBRARY_TYPE LIBRARY_SCOPE INSTALL_BUILD_RESULT)
             else()
                 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${SEAL_LAKE_TARGET} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
             endif()
-            SealLake_v030_InstallPackage(
+            SealLake_v040_InstallPackage(
                     COMPATIBILITY SameMajorVersion
                     NAMESPACE ${ARG_NAMESPACE}
                     DEPENDENCIES ${DEPENDENCIES}
@@ -829,7 +829,7 @@ function (_SealLakeImpl_CreatePackageConfig)
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
-        SealLake_v030_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
+        SealLake_v040_LogError("Unsupported argument: ${ARG_UNPARSED_ARGUMENTS}")
     endif()
 
     include(CMakePackageConfigHelpers)
@@ -903,7 +903,7 @@ function (_SealLakeImpl_StringAfter STR VALUE RESULT REVERSE)
     set(${RESULT} ${RESULT_VALUE} PARENT_SCOPE)
 endfunction()
 
-macro(SealLakeImpl_v030_UpdateTarget NAME)
+macro(SealLakeImpl_v040_UpdateTarget NAME)
     set(ARG_NAME "${NAME}")
     if (ARG_NAME)
         set(SEAL_LAKE_TARGET ${ARG_NAME})
@@ -915,7 +915,7 @@ macro(SealLakeImpl_v030_UpdateTarget NAME)
         endif()
     endif()
     if (NOT SEAL_LAKE_TARGET)
-        SealLake_v030_LogError("Pass NAME argument or set project() before using this function")
+        SealLake_v040_LogError("Pass NAME argument or set project() before using this function")
     endif()
 endmacro()
 
