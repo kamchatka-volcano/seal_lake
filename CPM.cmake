@@ -48,22 +48,13 @@ else()
   set(CURRENT_CPM_VERSION 0.42.0)
 endif()
 
-get_filename_component(CPM_CURRENT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" REALPATH)
-if(CPM_DIRECTORY)
-  if(NOT CPM_DIRECTORY STREQUAL CPM_CURRENT_DIRECTORY)
-    if(CPM_VERSION VERSION_LESS CURRENT_CPM_VERSION)
-      message(
-        AUTHOR_WARNING
-          "${CPM_INDENT} \
-A dependency is using a more recent CPM version (${CURRENT_CPM_VERSION}) than the current project (${CPM_VERSION}). \
-It is recommended to upgrade CPM to the most recent version. \
-See https://github.com/cpm-cmake/CPM.cmake for more information."
-      )
-    endif()
+get_filename_component(CPM_V0420_CURRENT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" REALPATH)
+if(CPM_V0420_DIRECTORY)
+  if(NOT CPM_V0420_DIRECTORY STREQUAL CPM_V0420_CURRENT_DIRECTORY)
     if(${CMAKE_VERSION} VERSION_LESS "3.17.0")
       include(FetchContent)
     endif()
-    #return() v0420 don't forget to comment this out when releasing a new version
+    return()
   endif()
 
   get_property(
@@ -138,8 +129,8 @@ set(CPM_VERSION
     ${CURRENT_CPM_VERSION}
     CACHE INTERNAL ""
 )
-set(CPM_DIRECTORY
-    ${CPM_CURRENT_DIRECTORY}
+set(CPM_V0420_DIRECTORY
+    ${CPM_V0420_CURRENT_DIRECTORY}
     CACHE INTERNAL ""
 )
 set(CPM_FILE
