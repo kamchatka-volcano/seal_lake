@@ -388,7 +388,7 @@ function (SealLake_v030_Import NAME VERSION)
             ARG
             ""
             "CMAKE_FILE;URL;GIT_REPOSITORY;GIT_TAG"
-            ""
+            "GIT_SUBMODULES"
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
@@ -399,15 +399,19 @@ function (SealLake_v030_Import NAME VERSION)
     endif()
 
     set(CPM_USE_LOCAL_PACKAGES ON)
-    CPM_v0420_AddPackage(
-            NAME ${NAME}
-            VERSION ${VERSION}
-            GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
-            GIT_TAG ${ARG_GIT_TAG}
-            GIT_SHALLOW    ON
-            GIT_PROGRESS TRUE
-            URL ${ARG_URL}
+    set(_ADD_PACKAGE_ARGS
+        NAME ${NAME}
+        VERSION ${VERSION}
+        GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
+        GIT_TAG ${ARG_GIT_TAG}
+        GIT_SHALLOW    ON
+        GIT_PROGRESS TRUE
+        URL ${ARG_URL}
     )
+    if(DEFINED ARG_GIT_SUBMODULES AND ARG_GIT_SUBMODULES)
+        list(APPEND _ADD_PACKAGE_ARGS GIT_SUBMODULES ${ARG_GIT_SUBMODULES})
+    endif()
+    CPM_v0420_AddPackage(${_ADD_PACKAGE_ARGS})
 endfunction()
 
 function(SealLake_v030_Bundle)
@@ -415,7 +419,7 @@ function(SealLake_v030_Bundle)
             ARG
             "SKIP_LOAD"
             "NAME;URL;GIT_REPOSITORY;GIT_TAG;DESTINATION"
-            "FILES;DIRECTORIES;WILDCARDS;TEXT_REPLACEMENTS"
+            "FILES;DIRECTORIES;WILDCARDS;TEXT_REPLACEMENTS;GIT_SUBMODULES"
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
@@ -425,12 +429,17 @@ function(SealLake_v030_Bundle)
         SealLake_v030_LogError("NAME argument must be set")
     endif()
 
-    SealLake_v030_DownloadSource(
+    set(_DOWNLOAD_SOURCE_ARGS
             NAME           "${ARG_NAME}"
             GIT_REPOSITORY "${ARG_GIT_REPOSITORY}"
             GIT_TAG        "${ARG_GIT_TAG}"
             URL            "${ARG_URL}"
     )
+    if(DEFINED ARG_GIT_SUBMODULES AND ARG_GIT_SUBMODULES)
+        list(APPEND _DOWNLOAD_SOURCE_ARGS GIT_SUBMODULES ${ARG_GIT_SUBMODULES})
+    endif()
+    SealLake_v030_DownloadSource(${_DOWNLOAD_SOURCE_ARGS})
+
     set(SEAL_LAKE_SOURCE_${ARG_NAME} "${SEAL_LAKE_SOURCE_${ARG_NAME}}" PARENT_SCOPE)
 
     SealLake_v030_ReplaceText(
@@ -583,7 +592,7 @@ function(SealLake_v030_DownloadSource)
             ARG
             ""
             "NAME;URL;GIT_REPOSITORY;GIT_TAG"
-            ""
+            "GIT_SUBMODULES"
             ${ARGN}
     )
     if (ARG_UNPARSED_ARGUMENTS)
@@ -617,15 +626,19 @@ function(SealLake_v030_DownloadSource)
         SealLake_v030_LogInfo("Download ${GIT_REPOSITORY_NAME}")
         string(TOLOWER ${GIT_REPOSITORY_NAME} GIT_REPOSITORY_NAME)
         set(DOWNLOAD_TARGET "${GIT_REPOSITORY_NAME}_${ARG_GIT_TAG}")
-
-        CPM_v0420_AddPackage(
-                NAME ${DOWNLOAD_TARGET}
-                GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
-                GIT_TAG        ${ARG_GIT_TAG}
-                GIT_SHALLOW    ON
-                GIT_PROGRESS TRUE
-                DOWNLOAD_ONLY TRUE
+        set(_ADD_PACKAGE_ARGS
+            NAME ${DOWNLOAD_TARGET}
+            GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
+            GIT_TAG        ${ARG_GIT_TAG}
+            GIT_SUBMODULES ${ARG_GIT_SUBMODULES}
+            GIT_SHALLOW    ON
+            GIT_PROGRESS TRUE
+            DOWNLOAD_ONLY TRUE
         )
+        if(DEFINED ARG_GIT_SUBMODULES AND ARG_GIT_SUBMODULES)
+            list(APPEND _ADD_PACKAGE_ARGS GIT_SUBMODULES ${ARG_GIT_SUBMODULES})
+        endif()
+        CPM_v0420_AddPackage(${_ADD_PACKAGE_ARGS})
     endif()
     SealLake_v030_Copy(
             SOURCE_PATH ${${DOWNLOAD_TARGET}_SOURCE_DIR}
